@@ -1,0 +1,24 @@
+{
+  "name": "onder-elkaar",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-static": "^3.0.0",
+    "@sveltejs/kit": "^2.0.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "ol": "^10.0.0",
+    "svelte": "^5.0.0",
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {
+    "svelte-check": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
