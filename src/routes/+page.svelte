@@ -107,7 +107,7 @@
         <form class="messageform" onsubmit={(e)=>{e.preventDefault();addMessage();}}><label for="chat-input">Schrijf in #{channel}</label><div class="sendrow"><input id="chat-input" bind:value={messageText} maxlength="500" placeholder="Wat wil je delen?" required/><button class="primary" type="submit">Plaats</button></div></form>
       </div>
       <p class="hint">Dit lijkt op een gedeeld gesprek, maar is alleen een lokale simulatie. Echte kringrechten en realtime berichten komen in een latere ontwikkelfase.</p>
-    {:else}
+    {:else if tab==='ontdek'}
       <section class="sectionhead"><div><span class="eyebrow">BETEKENIS EN VERWANTSCHAP</span><h2>Onverwachte routes</h2></div></section>
       <p class="lead">Wat raakt je, wat stoot je af en welke verbinding hoor of zie jij die niet vanzelfsprekend is? Een route is een uitnodiging, geen uitspraak over wat je moet waarderen.</p>
       <div class="stack">
