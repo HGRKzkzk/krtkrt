@@ -20,10 +20,7 @@
   function openPerson(name:string){selectedPerson=name===screenName?null:name;tab='profiel';}
   function openCircle(){tab='kringen';channel='algemeen';}
   function choosePost(id:string){selectedPostId=id;}
-  function safeLinks(raw:string){return raw.split(/[\\n,]+/).map(x=>x.trim()).filter(x=>/^https:\/\/[^\s]+$/i.test(x)).slice(0,5);}
-  $: currentPost = posts.find(p=>p.id===selectedPostId) || null;
-  $: shownProfile = selectedPerson ? demoPeople[selectedPerson] || {bio:'Deze persoon heeft nog geen publiek demo-profiel.',appreciates:'',dislikes:'',links:''} : myProfile;
-  $: profileName = selectedPerson || screenName || 'Gast';
+  function safeLinks(raw:string){return raw.split(/\n|,/).map(x=>x.trim()).filter(x=>/^https:\/\/[^\s]+$/i.test(x)).slice(0,5);}
   let posts:Post[] = [...demoPosts];
   let messages:Message[] = [...demoMessages];
   let connections:Connection[] = [...demoConnections];
@@ -35,6 +32,9 @@
   let screenName='Gast';
   let stored=false;
   let notice='';
+  $: currentPost = posts.find(p=>p.id===selectedPostId) || null;
+  $: shownProfile = selectedPerson ? demoPeople[selectedPerson] || {bio:'Deze persoon heeft nog geen publiek demo-profiel.',appreciates:'',dislikes:'',links:''} : myProfile;
+  $: profileName = selectedPerson || screenName || 'Gast';
   const key='onder-elkaar-demo-v1';
   onMount(()=>{
     try {
