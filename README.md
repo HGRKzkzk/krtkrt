@@ -66,3 +66,9 @@ docker compose -p krtkrt-dev -f infra/compose.yaml -f infra/compose.dev.yaml up 
 ```
 
 Open daarna http://localhost:8080. Een test van het backendproxy-pad is http://localhost:8080/api/health. **Dit bouwt alleen de infrastructuur:** aanmelden, uitnodigingen, kringen met rechten en gedeelde profielen werken nog niet. De bestaande applicatie gebruikt nog uitsluitend browseropslag. Het Pi-startcommando, opslagafspraken, stopcommando's en veiligheidsgrenzen staan in de aparte handleiding.
+
+## Kringen als zelfstandig vertrekpunt (conceptdemo)
+
+De tab **Kringen** bevat nu drie fictieve verbanden: een schilderklasje en twee bands. Je kunt iedere kring openen en daar de eigen bijdragen en gesprekken lezen of lokale demobijdragen plaatsen. Oude schildergroepgesprekken blijven leesbaar. Vanuit de kring kan de bezoeker **Bekijk op kaart** kiezen: het schilderklasje heeft één denkbeeldige ontmoetingsplek, Band A twee denkbeeldige activiteiten en Band B nadrukkelijk **geen** kaartlocatie. Dat laatste is geen ontbrekend profielveld.
+
+Op de algemene buurtkaart verschijnen alleen buurtbijdragen, geen kringgebonden berichten als verzonnen geografische punten. Je eigen persoonlijke pagina verwijst naar de drie proefkringen. Alle lidmaatschappen, bijdragen en locaties zijn uitsluitend fictieve frontendvoorbeelden. Er is **geen** echte kringautorisatie, geen automatisch tonen van ledenlocaties en geen werkend account.
