@@ -9,6 +9,14 @@ export function cleanMapArea(value: unknown): MapArea | null {
 }
 export function validPc4(value: string): boolean { return /^[1-9][0-9]{3}$/.test(value); }
 
+/** Accept a four-digit PC4 or a complete Dutch postcode, storing only PC4. */
+export function parsePostcode(value: string): string | null {
+  const normalized = value.trim().toUpperCase().replace(/\\s+/g, '');
+  if (/^[1-9][0-9]{3}$/.test(normalized)) return normalized;
+  if (/^[1-9][0-9]{3}[A-Z]{2}$/.test(normalized)) return normalized.slice(0, 4);
+  return null;
+}
+
 export type GeoFeatureCollection = {
   type: 'FeatureCollection';
   features: Array<{ type: 'Feature'; geometry: { type: string; coordinates: unknown }; properties: Record<string, unknown> }>;
