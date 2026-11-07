@@ -50,7 +50,7 @@
     }
     return result;
   })();
-  $: selectedPeople = selectedArea ? groups.get(selectedArea) || [] : [];
+  $: selectedPeople = selectedArea ? [...(groups.get(selectedArea) || [])].sort((a,b) => Number(b.mine) - Number(a.mine)) : [];
 
   function renderPosts() {
     postsSource.clear();
@@ -144,8 +144,9 @@
       </div>
       <div class="people">
         {#each selectedPeople as person}
-          <button onclick={() => {if(person.mine) onOwnProfile(); else onPerson(person.name);}}>
-            <span>{person.mine?'Mijn plek':person.name}</span><span aria-hidden="true">↗</span>
+          <button class:own-person={person.mine} onclick={() => {if(person.mine) onOwnProfile(); else onPerson(person.name);}}>
+            <span class="person-label">{person.mine ? (person.name || 'Mijn plek') : person.name}{#if person.mine}<span class="own-hint">Jij · Mijn plek</span>{/if}</span>
+            <span aria-hidden="true">↗</span>
           </button>
         {/each}
       </div>
@@ -164,6 +165,10 @@
   .people{display:flex;flex-direction:column}
   .people button{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:0;background:transparent;color:#273d2f;text-align:left;cursor:pointer;border-bottom:1px solid #edf0eb}
   .people button:hover,.people button:focus-visible{background:#eff3ed}
+  .people button.own-person{background:#f8e9df;color:#653c26;border-left:3px solid #a55e3c;padding-left:11px}
+  .people button.own-person:hover,.people button.own-person:focus-visible{background:#f3dfd0}
+  .person-label{display:flex;flex-direction:column;gap:2px}
+  .own-hint{font-size:11px;color:#86563f}
   .legend{position:absolute;bottom:12px;left:12px;padding:6px 9px;background:#fafaf8ed;z-index:1;max-width:70%;font-size:11px;color:#5d6d62}
   @media(max-width:760px){.map-shell,.map{min-height:min(52vh,470px)}.area-panel{top:10px;right:10px;max-height:70%}.legend{max-width:85%}}
 </style>
