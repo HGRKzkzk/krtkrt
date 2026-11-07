@@ -62,7 +62,7 @@
   <form class="entry" onsubmit={(e) => { e.preventDefault(); void showArea(pc4.trim(), true); }}>
     <label for="area-pc4">Postcode of postcodegebied</label>
     <div class="controls">
-      <input id="area-pc4" inputmode="text" maxlength="7" pattern="[1-9][0-9]{3}([ ]?[A-Za-z]{2})?" title="Vier cijfers of volledige Nederlandse postcode, bijvoorbeeld 5038 AB" placeholder="5038 AB" autocomplete="off" bind:value={pc4} />
+      <input id="area-pc4" inputmode="text" maxlength="7" title="Vier cijfers of volledige Nederlandse postcode, bijvoorbeeld 5038 AB" placeholder="5038 AB" autocomplete="off" bind:value={pc4} />
       <button type="submit" disabled={checking}>{checking ? 'Zoeken…' : 'Toon gebied'}</button>
       {#if area}<button type="button" class="remove" onclick={clear}>Wissen</button>{/if}
     </div>
