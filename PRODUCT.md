@@ -56,3 +56,11 @@ Dit document bevat de huidige normatieve keuzes. Gedane experimenten en vervalle
 Een persoonlijke foto is volledig vrijwillig; een standaardavatar met initialen is gelijkwaardig. Dezelfde zelfgekozen afbeelding kan terugkomen als compact herkenningspunt in het groepspaneel en bij bijdragen. Fotokeuze is geen profielvolledigheidseis.
 
 PC4 blijft de geografische sleutel. In de presentatie gaat een begrijpelijke plaats-/gebiedsnaam vóór een kaal postcodegetal, **mits de bron eenduidig is**. Een PC4-gebied kan verschillende wijken overlappen; presenteer geen afgeleide plaatsnaam als gegarandeerd wijklabel. Bij onzekerheid: `Gebied [PC4]`.
+
+## Kringen als vertrekpunt, kaart als context (actueel conceptbesluit)
+
+**Een kring is een sociaal verband en niet noodzakelijk een plek op de kaart.** De kaart is een vorm van verkenning, niet de ordening waar alle relaties onder moeten vallen. Eén persoon kan bij meerdere kringen horen zonder dat deze kringen samenvallen of dat hun lidmaatschappen automatisch openbaar zijn.
+
+De eerste frontendproef bevat drie fictieve kringen: een schilderklasje met één ontmoetingsplek, Band A met verschillende activiteitlocaties en Band B zonder geografische aanduiding. Ieder verband heeft een eigen ingang, gesprekken en bijdragen. Vanuit een kring is een contextuele kaart te openen met uitsluitend expliciet opgegeven activiteiten of plekken. Een kring zonder locatie blijft volledig bruikbaar. **Leden worden niet automatisch op een kringkaart gezet.**
+
+Een bijdrage hoort bij één gekozen context; delen over kringgrenzen heen is een latere expliciete handeling met eigen zichtbaarheid en toestemming. De buurtkaart toont geen kringinterne bijdragen als automatisch geolokaliseerde punten. Een daadwerkelijke scheiding tussen besloten kringen vergt serverautorisatie en is nog niet aanwezig.

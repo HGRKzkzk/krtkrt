@@ -62,3 +62,11 @@ Nginx stuurt uitsluitend `/api/` naar PocketBase door; `/_/` wordt via de webpoo
 De PocketBase-data staan buiten de container in een per omgeving geconfigureerde map (`PB_DATA_DIR`) en zijn uitgesloten van Git. Development en Pi gebruiken verschillende projectnamen en opslag. De eerste backend bevat nog **geen appcollecties, uitnodigingen of accountintegratie**; de huidige frontend houdt haar lokale demogedrag.
 
 Voor de pilot volgt nog: migratieschema, uitnodigings- en registratieflow, gebruikers- en kringrechten, databaseback-ups met hersteltest, imageversies/digests, reproduceerbare CI ARM64-images en beveiligde externe toegang. Installatie en testprocedure: [infra/README.md](infra/README.md).
+
+## Conceptproef: meerdere kringen en contextkaarten
+
+`src/lib/demoCircles.ts` definieert drie fictieve kringen met eigen ID, ledennamen, kanalen en **optionele activiteiten met expliciete voorbeeldcoördinaten**; een kring is geen geografisch object. `src/lib/CircleMap.svelte` tekent uitsluitend locaties die bij de geopende kring als activiteit zijn opgegeven. Als er geen locaties bestaan, toont de UI een gewone uitleg in plaats van een kunstmatige marker.
+
+`src/routes/+page.svelte` toont een kringenoverzicht, actieve kring met bijdragen en kanaalgesprekken, en een omschakeling naar de contextkaart. Nieuwe demo-berichten bewaren optioneel `circle`; historische berichten zonder die eigenschap blijven in de schildergroep zichtbaar. De bestaande opslag onder `onder-elkaar-demo-v1` blijft behouden. De algemene buurtkaart filtert voortaan op `visibility === 'buurt'`; kringinterne berichten krijgen **geen** willekeurige kaartpositie. De kaartcoördinaten van de nieuwe activiteiten zijn uitsluitend verzonnen demo-voorbeelden en mogen niet voor echte optredens of afspraken worden aangezien.
+
+Deze frontendproef heeft geen echte uitnodigingen, lidmaatschappen of autorisatie. 'Alle drie de kringen' is alleen een demo-aanname, geen accountmodel of toegangsbesluit.

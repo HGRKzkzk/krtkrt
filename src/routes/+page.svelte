@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import MapView from '$lib/MapView.svelte';
+  import CircleMap from '$lib/CircleMap.svelte';
+  import { demoCircles, circleById } from '$lib/demoCircles';
+  import type { CircleId } from '$lib/demoCircles';
   import PersonalPlaceView from '$lib/PersonalPlace.svelte';
   import Avatar from '$lib/Avatar.svelte';
   import { demoNeighbours, demoNeighbourPlace } from '$lib/demoNeighbours';
   import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
   import type { PersonalPlace } from '$lib/personalPlace';
   import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
-  import type { Post, Message, Connection, Kind, Visibility } from '$lib/types';
+  import type { Post, Message, Connection, Kind } from '$lib/types';
 
   type Tab = 'kaart' | 'kringen' | 'profiel';
   type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
@@ -22,11 +25,12 @@
   let personalPlace: PersonalPlace = emptyPlace();
   let screenName = 'Gast';
   let channel = 'algemeen';
+  let activeCircleId: CircleId | null = null;
+  let showCircleMap = false;
   let showComposer = false;
   let editingProfile = false;
   let postText = '';
   let postKind: Kind = 'vraag';
-  let postVisibility: Visibility = 'kring';
   let messageText = '';
   let notice = '';
   let stored = false;
@@ -40,6 +44,9 @@
   };
 
   $: currentPost = posts.find((p) => p.id === selectedPostId) ?? null;
+  $: activeCircle = activeCircleId ? circleById(activeCircleId) : null;
+  $: circlePosts = activeCircle ? posts.filter((p) => p.circle === activeCircle.name || (activeCircle.id === 'schildergroep' && p.circle === 'Schildergroep')) : [];
+  $: mapPosts = posts.filter((p) => p.visibility === 'buurt');
   $: profileName = selectedPerson || screenName || 'Gast';
   $: shownProfile = selectedPerson
     ? (demoNeighbours.find((person) => person.name === selectedPerson)
@@ -86,15 +93,31 @@
     editingProfile = false;
     tab = 'profiel';
   }
-  function openCircle() {
+  function openCircle(id: CircleId = 'schildergroep') {
+    activeCircleId = id;
     channel = 'algemeen';
+    showCircleMap = false;
+    showComposer = false;
     tab = 'kringen';
+  }
+  function circlesOverview() {
+    activeCircleId = null;
+    showCircleMap = false;
+    showComposer = false;
+    tab = 'kringen';
+  }
+  function openPostCircle(circleName: string) {
+    const circle = demoCircles.find((item) => item.name === circleName || (item.id === 'schildergroep' && circleName === 'Schildergroep'));
+    if (circle) openCircle(circle.id);
+    else circlesOverview();
   }
   function addPost() {
     if (!postText.trim()) return;
+    const inCircle = tab === 'kringen' && activeCircle;
     const post: Post = {
       id: crypto.randomUUID(), author: screenName.trim() || 'Gast', kind: postKind,
-      text: postText.trim(), visibility: postVisibility, circle: 'Schildergroep', createdAt: Date.now()
+      text: postText.trim(), visibility: inCircle ? 'kring' : 'buurt',
+      circle: inCircle ? activeCircle.name : '', createdAt: Date.now()
     };
     posts = [post, ...posts];
     selectedPostId = post.id;
@@ -104,7 +127,8 @@
   }
   function addMessage() {
     if (!messageText.trim()) return;
-    messages = [...messages, { id: crypto.randomUUID(), author: screenName.trim() || 'Gast', channel, text: messageText.trim(), createdAt: Date.now() }];
+    if (!activeCircle) return;
+    messages = [...messages, { id: crypto.randomUUID(), author: screenName.trim() || 'Gast', channel, circle:activeCircle.name, text: messageText.trim(), createdAt: Date.now() }];
     messageText = '';
     persist();
   }
@@ -126,6 +150,8 @@
     showComposer = false;
     editingProfile = false;
     tab = 'kaart';
+    activeCircleId = null;
+    showCircleMap = false;
     notice = '';
     persist();
   }
@@ -147,7 +173,7 @@
     <button class="wordmark" onclick={() => tab = 'kaart'} aria-label="krtkrt — naar de kaart">krtkrt<span class="dot">.</span></button>
     <nav aria-label="Hoofdnavigatie">
       <button class:active={tab === 'kaart'} aria-current={tab === 'kaart' ? 'page' : undefined} onclick={() => tab = 'kaart'}>Kaart</button>
-      <button class:active={tab === 'kringen'} aria-current={tab === 'kringen' ? 'page' : undefined} onclick={openCircle}>Kringen</button>
+      <button class:active={tab === 'kringen'} aria-current={tab === 'kringen' ? 'page' : undefined} onclick={circlesOverview}>Kringen</button>
       <button class:active={tab === 'profiel'} aria-current={tab === 'profiel' ? 'page' : undefined} onclick={() => openPerson(screenName)}>Mijn plek</button>
     </nav>
   </header>
@@ -155,7 +181,7 @@
   {#if tab === 'kaart'}
     <main class="map-layout">
       <section class="map-area" aria-label="Kaart van de buurt">
-        <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id}
+        <MapView posts={mapPosts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id}
           ownArea={personalPlace.areaVisible ? personalPlace.mapArea : null}
           ownName={screenName}
           ownAvatar={personalPlace.avatar || ''}
@@ -166,7 +192,7 @@
       </section>
       <aside class="sidebar" aria-label="Oproepen">
         <div class="sidebar-head">
-          <h1>In de buurt <span class="count">{posts.length}</span></h1>
+          <h1>In de buurt <span class="count">{mapPosts.length}</span></h1>
           <button class="action-link" onclick={() => showComposer = !showComposer}>{showComposer ? 'Sluiten' : '+ Bijdrage'}</button>
         </div>
         {#if showComposer}
@@ -177,13 +203,12 @@
             </select>
             <label for="post-text">Bericht</label>
             <textarea id="post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat speelt er?"></textarea>
-            <label for="post-visibility">Bereik</label>
-            <select id="post-visibility" bind:value={postVisibility}><option value="kring">Schildergroep</option><option value="buurt">Buurt</option></select>
+            <small>Deze bijdrage wordt in de buurt-demo getoond. Voor een bijdrage aan een kring ga je naar die kring.</small>
             <button class="solid-button" type="submit">Plaatsen</button>
           </form>
         {/if}
         <div class="post-list">
-          {#each posts as post (post.id)}
+          {#each mapPosts as post (post.id)}
             <article class:selected={selectedPostId === post.id} class="post">
               <button class="post-open" onclick={() => selectedPostId = post.id} aria-expanded={selectedPostId === post.id}>
                 <span class="post-meta">{post.kind} · {post.visibility === 'kring' ? 'Schildergroep' : 'Buurt'} · {when(post.createdAt)}</span>
@@ -192,7 +217,7 @@
               {#if selectedPostId === post.id}
                 <div class="post-actions">
                   <button class="author-with-avatar" onclick={() => openPerson(post.author)}><Avatar name={post.author} image={post.author === screenName ? (personalPlace.avatar || '') : ''}/>{post.author}</button>
-                  <button onclick={openCircle}>Schildergroep</button>
+                  <button onclick={() => openPostCircle(post.circle)}>{post.circle || 'Kring'}</button>
                   {#if !post.demo}<button onclick={() => removePost(post.id)}>Verwijder</button>{/if}
                 </div>
               {/if}
@@ -203,30 +228,106 @@
     </main>
   {:else if tab === 'kringen'}
     <main class="content-view">
-      <div class="section-title"><h1>Schildergroep</h1><span class="muted">Voorbeeldkring</span></div>
-      <div class="conversation-layout">
-        <nav class="channels" aria-label="Kanalen">
-          <button class:active={channel === 'algemeen'} onclick={() => channel = 'algemeen'}># algemeen</button>
-          <button class:active={channel === 'materiaal'} onclick={() => channel = 'materiaal'}># materiaal</button>
-        </nav>
-        <section class="conversation" aria-label="Gesprek">
-          <div class="messages">
-            {#each messages.filter((m) => m.channel === channel) as message (message.id)}
-              <article class="message">
-                <div class="message-line"><button class="author" onclick={() => openPerson(message.author)}>{message.author}</button><time>{when(message.createdAt)}</time></div>
-                <p>{message.text}</p>
+      {#if !activeCircle}
+        <div class="section-title"><h1>Mijn kringen</h1><span class="muted">Drie fictieve verbanden</span></div>
+        <p class="circle-lead">Een kring is een verband tussen mensen. Ze kan een vaste ontmoetingsplek hebben, verschillende activiteitlocaties, of helemaal geen locatie.</p>
+        <div class="circle-list">
+          {#each demoCircles as circle (circle.id)}
+            <button class="circle-choice" onclick={() => openCircle(circle.id)}>
+              <span class="circle-symbol" aria-hidden="true">{circle.id === 'schildergroep' ? '◒' : circle.id === 'band-a' ? '♪' : '♫'}</span>
+              <span class="circle-description"><strong>{circle.name}</strong><span>{circle.summary}</span><small>{circle.places.length === 0 ? 'Geen kaartlocatie' : circle.places.length === 1 ? 'Eén voorbeeldlocatie' : circle.places.length + ' voorbeeldlocaties'}</small></span>
+              <span aria-hidden="true">→</span>
+            </button>
+          {/each}
+        </div>
+        <p class="circle-note">In deze demo hoor je bij alle drie de kringen om het concept te onderzoeken. Dit is geen echt lidmaatschap of toegangssysteem.</p>
+      {:else}
+        <div class="circle-breadcrumb"><button class="action-link" onclick={circlesOverview}>← Mijn kringen</button><span aria-hidden="true">/</span><span>{activeCircle.name}</span></div>
+        <div class="section-title">
+          <h1>{activeCircle.name}</h1>
+          <span class="muted">Fictieve kring</span>
+        </div>
+        <p class="circle-lead">{activeCircle.description}</p>
+        <div class="circle-navigation">
+          <button class:chosen={!showCircleMap} onclick={() => showCircleMap = false}>Gesprekken en bijdragen</button>
+          <button class:chosen={showCircleMap} onclick={() => showCircleMap = true}>Bekijk op kaart{activeCircle.places.length ? ' (' + activeCircle.places.length + ')' : ''}</button>
+        </div>
+        {#if showCircleMap}
+          <section aria-label="Geografische context van deze kring">
+            {#if activeCircle.places.length}
+              <CircleMap places={activeCircle.places}/>
+              <div class="activity-list">
+                <h2>Activiteiten op de kaart</h2>
+                {#each activeCircle.places as place (place.id)}
+                  <div class="activity"><strong>{place.title}</strong><p>{place.description}</p></div>
+                {/each}
+              </div>
+            {:else}
+              <div class="no-map-place">
+                <h2>Deze kring heeft geen kaartlocatie</h2>
+                <p>De band bestaat ook zonder vaste plek. Er zijn geen locaties of activiteiten opgegeven; we tekenen geen kunstmatige positie en tonen geen locaties van leden.</p>
+                <button class="action-link" onclick={() => showCircleMap = false}>Terug naar de gesprekken</button>
+              </div>
+            {/if}
+          </section>
+        {:else}
+          <section class="circle-posts" aria-label="Bijdragen uit deze kring">
+            <div class="circle-post-head"><h2>Wat er in deze kring speelt</h2><button class="action-link" onclick={() => showComposer = !showComposer}>{showComposer ? 'Sluiten' : '+ Bijdrage'}</button></div>
+            {#if showComposer}
+              <form class="circle-compose" onsubmit={(event) => {event.preventDefault(); addPost();}}>
+                <label for="circle-post-kind">Soort bijdrage</label>
+                <select id="circle-post-kind" bind:value={postKind}><option value="vraag">Vraag</option><option value="aanbod">Aanbod</option><option value="gedachte">Gedachte</option></select>
+                <label for="circle-post-text">Bericht</label>
+                <textarea id="circle-post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat wil je delen met deze kring?"></textarea>
+                <small>Alleen zichtbaar in deze fictieve kringweergave; geen echte toegangsrechten.</small>
+                <button type="submit" class="solid-button">Plaatsen (demo)</button>
+              </form>
+            {/if}
+            {#if circlePosts.length === 0}<p class="muted">Nog geen bijdragen in deze kring.</p>{/if}
+            {#each circlePosts as post (post.id)}
+              <article class="circle-post">
+                <div class="post-meta">{post.kind} · {when(post.createdAt)} · {post.visibility === 'kring' ? 'In deze kring' : 'Gedeeld met de buurt'}</div>
+                <p>{post.text}</p>
+                <button class="author" onclick={() => openPerson(post.author)}>{post.author}</button>
               </article>
             {/each}
+          </section>
+          <div class="conversation-layout">
+            <nav class="channels" aria-label={'Kanalen van ' + activeCircle.name}>
+              <h2>Gesprekken</h2>
+              {#each activeCircle.channels as option}
+                <button class:active={channel === option} onclick={() => channel = option}># {option}</button>
+              {/each}
+            </nav>
+            <section class="conversation" aria-label="Gesprek">
+              <div class="messages">
+                {#each messages.filter((m) => m.channel === channel && (m.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !m.circle))) as message (message.id)}
+                  <article class="message">
+                    <div class="message-line"><button class="author" onclick={() => openPerson(message.author)}>{message.author}</button><time>{when(message.createdAt)}</time></div>
+                    <p>{message.text}</p>
+                  </article>
+                {/each}
+              </div>
+              <form class="send-message" onsubmit={(event) => {event.preventDefault(); addMessage();}}>
+                <label for="message-text">Schrijf in #{channel} · {activeCircle.name}</label>
+                <div class="send-row">
+                  <input id="message-text" bind:value={messageText} maxlength="500" required placeholder="Schrijf een bericht…"/>
+                  <button type="submit" class="solid-button">Verstuur (demo)</button>
+                </div>
+              </form>
+            </section>
           </div>
-          <form class="send-message" onsubmit={(event) => {event.preventDefault(); addMessage();}}>
-            <label for="message-text">Schrijf in #{channel}</label>
-            <div class="send-row">
-              <input id="message-text" bind:value={messageText} maxlength="500" required placeholder="Schrijf een bericht…"/>
-              <button type="submit" class="solid-button">Verstuur</button>
+          <section class="circle-members">
+            <h2>Bij deze kring (voorbeeld)</h2>
+            <p class="muted">Lidmaatschap zegt niets over de woonplek van deze mensen.</p>
+            <div class="member-list">
+              {#each activeCircle.memberNames as member}
+                <button onclick={() => openPerson(member === 'Gast' ? screenName : member)}><Avatar name={member === 'Gast' ? screenName : member} image={member === 'Gast' ? (personalPlace.avatar || '') : ''}/><span>{member === 'Gast' ? screenName : member}</span></button>
+              {/each}
             </div>
-          </form>
-        </section>
-      </div>
+          </section>
+        {/if}
+      {/if}
     </main>
   {:else}
     <main class="content-view profile-view">
@@ -246,6 +347,16 @@
         onChange={(next) => {personalPlace = next; persist();}}
         onNameChange={(next) => {screenName = next; persist();}}
       />
+      {#if !selectedPerson}
+        <section class="my-circle-links" aria-label="Mijn kringen">
+          <h2>Mijn kringen (voorbeeld)</h2>
+          <div class="my-circle-buttons">
+            {#each demoCircles as circle}
+              <button onclick={() => openCircle(circle.id)}>{circle.name} <span aria-hidden="true">→</span></button>
+            {/each}
+          </div>
+        </section>
+      {/if}
       <section class="contributions">
         <h2>Bijdragen</h2>
         {#if profilePosts.length === 0 && profileNotes.length === 0}<p class="muted">Nog geen bijdragen.</p>{/if}
@@ -327,6 +438,36 @@
   .profile-field p{white-space:pre-wrap;overflow-wrap:anywhere}
   .outbound{overflow-wrap:anywhere}
   .profile-form{padding:0 0 30px;border:0;max-width:620px}
+  .circle-lead{font-size:15px;max-width:750px;color:#4c594f;line-height:1.7}
+  .circle-list{display:flex;flex-direction:column;border-top:1px solid #dfe3dd;margin:22px 0}
+  .circle-choice{width:100%;display:flex;align-items:center;gap:19px;text-align:left;background:transparent;border:0;border-bottom:1px solid #dfe3dd;padding:21px 4px;color:#263a2c}
+  .circle-choice:hover,.circle-choice:focus-visible{background:#f0f3ee}
+  .circle-symbol{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border:1px solid #cad6ce;border-radius:5px;font-size:25px;background:#ecf1ec;flex-shrink:0}
+  .circle-description{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+  .circle-description strong{font-size:17px;font-weight:600}
+  .circle-description span{font-size:13px;color:#57665a}
+  .circle-description small{font-size:11px;color:#737e72}
+  .circle-note{color:#757d75;font-size:12px;max-width:640px}
+  .circle-breadcrumb{display:flex;align-items:center;gap:11px;margin-bottom:20px;font-size:13px;color:#7a837a}
+  .circle-navigation{display:flex;flex-wrap:wrap;gap:12px;border-bottom:1px solid #dce3dc;margin:24px 0}
+  .circle-navigation button{background:transparent;border:0;border-bottom:2px solid transparent;color:#536357;padding:10px 2px}
+  .circle-navigation button.chosen{color:#263d2d;border-bottom-color:#263d2d;font-weight:600}
+  .circle-posts{margin:25px 0 35px;max-width:720px}
+  .circle-post-head{display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .circle-post-head h2{margin:0}
+  .circle-compose{display:grid;gap:8px;padding:18px 0}
+  .circle-post{border-bottom:1px solid #e1e6df;padding:12px 0}
+  .circle-post p{margin:4px 0 7px}
+  .circle-post .author{font-size:12px}
+  .circle-members,.my-circle-links{border-top:1px solid #dee3dc;margin-top:35px;padding-top:20px}
+  .member-list,.my-circle-buttons{display:flex;flex-wrap:wrap;gap:10px}
+  .member-list button{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d9e1d8;padding:7px 11px;color:#344f3c}
+  .my-circle-buttons button{display:flex;gap:14px;align-items:center;background:#f7f9f6;border:1px solid #d9e1d8;padding:10px 14px;color:#344f3c}
+  .activity-list{padding-top:22px}
+  .activity{padding:12px 0;border-bottom:1px solid #e2e6df}
+  .activity p{font-size:13px;color:#59665a;margin:4px 0}
+  .no-map-place{padding:30px;border:1px solid #dce3da;background:#f3f6f1}
+  .no-map-place p{max-width:650px}
   .author-with-avatar{display:inline-flex;gap:7px;align-items:center}
   .contribution-author{display:flex;align-items:center;gap:10px}
   .contributions{margin-top:44px;border-top:1px solid #dfe3dd;padding-top:20px}
