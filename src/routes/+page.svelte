@@ -151,7 +151,9 @@
   {#if tab === 'kaart'}
     <main class="map-layout">
       <section class="map-area" aria-label="Kaart van de buurt">
-        <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id} />
+        <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id}
+          ownArea={personalPlace.areaVisible ? personalPlace.mapArea : null}
+          onOwnProfile={() => {selectedPerson = null; tab = 'profiel'; editingProfile = false;}} />
         <div class="map-caption">Voorbeeldpunten op buurtniveau, geen woonadressen.</div>
       </section>
       <aside class="sidebar" aria-label="Oproepen">
