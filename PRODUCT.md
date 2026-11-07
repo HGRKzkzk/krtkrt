@@ -57,3 +57,10 @@ Een echte multi-user implementatie vergt aparte autorisatie voor de zichtbaarhei
 - Verouderde lokale circulaire kaartselecties worden niet stilzwijgend omgezet in postcodes: die keuze moet de gebruiker opnieuw maken.
 - De persoonlijke pagina krijgt een vaste redactionele structuur: een grote persoonskop, introductie, persoonlijke verhalen en beelden, vindplaatsen elders, contactvoorkeur. De inhoud blijft vrijwillig en eigen; de pagina vraagt niet om profielvolledigheid.
 - De kaartvisualisatie blijft alleen zichtbaar na uitdrukkelijke inschakeling. In een echte multi-useromgeving moeten serverrechten en schaalniveaus op privacy worden getoetst voordat iemand anders de regio kan opvragen.
+
+## Meerdere profielen in één postcodegebied — kaartprincipe
+- Per viercijferig postcodegebied komt maximaal **één groepsmarkering**: het getal is het aantal zichtbare profielen in dat gebied, niet het aantal inwoners of een populariteitsmaat.
+- Klikken op een gebied toont de aangesloten profielen in een rustig paneel. Bezoekers kiezen daarna wie zij willen leren kennen. Een groepsmarkering is geen geografisch persoonscoördinaat.
+- De eigen deelnemer wordt alleen meegeteld als diens postcodegebied is gekozen én zichtbaar is gemaakt. Staat die deelnemer in hetzelfde gebied als anderen, dan ontstaat géén tweede, overlappende pin.
+- Vier fictieve personen in PC4 5041 dienen als proefinhoud, met eigen introducties. Deze personen zijn geen accounts en hun profielen staan vast in de code; zij zijn expliciet herkenbaar als voorbeelden.
+- De huidige demo heeft geen echte toegangscontrole. Voor een toekomstige gedeelde dienst mogen uitsluitend server-side toegestane, vrijwillig zichtbare profielen in telling en lijsten voorkomen. Bij zeer kleine groepen moet opnieuw worden afgewogen of aantalweergave privacyrisico's oplevert.
