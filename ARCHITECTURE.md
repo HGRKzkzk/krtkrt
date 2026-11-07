@@ -23,3 +23,12 @@ Betekenis ontstaat in menselijke expressie en interactie. De UI bevat geen route
 
 ## UI 0.2 — presentatie
 De kaart is het primaire canvas; de bijdragenlijst is een aansluitende zijstrook (op smalle schermen onder de kaart). De overige primaire bestemmingen zijn Kringen en Mijn plek. De demo gebruikt dezelfde browseropslagsleutel als UI 0.1 om bestaande bijdragen en profielinhoud te behouden. De vormgeving bevat geen nieuw afhankelijkheden of backend.
+
+
+## Mijn plek — lokale editorprototype
+- `src/lib/personalPlace.ts` definieert de profielblokken, thema-, contact- en buurtkeuzes en de conversie van bestaande lokale profielvelden.
+- `src/lib/PersonalPlace.svelte` tekent het zelfportret en biedt de bewerkingsinterface met omhoog/omlaag herordenen.
+- De sleutel `onder-elkaar-demo-v1` blijft behouden, met een extra `personalPlace` eigenschap. Bestaande velden worden bij eerste bezoek omgezet; eerdere bijdragen blijven bestaan.
+- Afbeeldingen zijn lokaal opgeslagen data-URL's van maximaal 300 kB per bestand en worden niet naar een server verzonden. Opslaglimieten van de browser kunnen worden bereikt. Geen externe scriptuitvoering of raw HTML.
+- Profielinhoud kan niet werkelijk door anderen worden bekeken, omdat de MVP geen backend heeft. De link- en contactpresentatie zijn proefinteracties.
+- Voordat een echte multi-userpilot mogelijk is, moet een opslag- en autorisatiemodel voor profielblokken, contactvoorkeuren, media, kringzichtbaarheid en verwijdering worden ontworpen en getest.
