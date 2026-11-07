@@ -47,3 +47,8 @@ Voor een volgende fase zijn onder andere nodig: server-side identiteits- en auto
 Bij een PR met wijzigingen aan de applicatiebron (`src/**`) of `package.json` moet ten minste één van **README.md**, **PRODUCT.md** of **ARCHITECTURE.md** zijn bijgewerkt. Voor uitsluitend interne wijzigingen kan een beheerder expliciet de PR-label `docs-not-needed` toepassen; de motivatie hoort dan in de PR-beschrijving. Daarnaast is er een PR-template die vraagt welke contracten, privacykeuzes en voorbeelden geraakt worden. Zie [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Dit is een onderhoudscontrole, geen garantie dat elk beschreven feit automatisch inhoudelijk juist is: reviewers blijven verantwoordelijk voor de correspondentie tussen code, gedrag en documentatie.
+
+## Avatar- en gebiedslabels
+Het optionele `personalPlace.avatar` bevat in deze browserdemo een vierkant uitgesneden, verkleinde JPEG-data-URL van circa 160×160 pixels; de invoer accepteert JPG, PNG en WebP tot 5 MB. Het opgeslagen resultaat is op lengte begrensd. De herbruikbare component `src/lib/Avatar.svelte` toont het lokale beeld of anders initialen. Dezelfde bron wordt aan de PC4-groepslijst en eigen bijdragen doorgegeven. Er is **geen serverupload of gedeeld gebruikersprofiel**.
+
+`src/lib/mapArea.ts` vraagt voor een bestaande PC4 optioneel een plaatslabel op via de PDOK Locatieserver; alleen wanneer de gevonden plaatsnaam eenduidig bij die vier cijfers hoort wordt deze gebruikt. Anders verschijnt het neutrale PC4-label. De postcodegrenzen blijven van Esri komen. Het externe PDOK-verzoek deelt de gekozen PC4-code, niet een adres.
