@@ -11,7 +11,7 @@ export function validPc4(value: string): boolean { return /^[1-9][0-9]{3}$/.test
 
 /** Accept a four-digit PC4 or a complete Dutch postcode, storing only PC4. */
 export function parsePostcode(value: string): string | null {
-  const normalized = value.trim().toUpperCase().replace(/\\s+/g, '');
+  const normalized = value.trim().toUpperCase().replace(/\s+/g, '');
   if (/^[1-9][0-9]{3}$/.test(normalized)) return normalized;
   if (/^[1-9][0-9]{3}[A-Z]{2}$/.test(normalized)) return normalized.slice(0, 4);
   return null;
