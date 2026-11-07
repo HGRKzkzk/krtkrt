@@ -10,6 +10,10 @@
   export let onChange: (next: PersonalPlace) => void = () => {};
   export let onNameChange: (name: string) => void = () => {};
   let imageError = '';
+  $: intro = place.blocks.find((block) => block.kind === 'text' && block.text.trim());
+  $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && block.text.trim()) || (block.kind === 'image' && block.image)));
+  $: allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)));
+
 
   function change(part: Partial<PersonalPlace>) { onChange({ ...place, ...part }); }
   function updateBlock(id: string, partial: Partial<ProfileBlock>) {
@@ -56,9 +60,7 @@
       {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
       {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
     </header>
-    {@const intro = place.blocks.find((block) => block.kind === 'text' && block.text.trim())}
     {#if intro}<div class="introduction">{intro.text}</div>{/if}
-    {@const stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && block.text.trim()) || (block.kind === 'image' && block.image)))}
     {#if stories.length}
       <section class="stories">
         <h3>Wat ik verder zoal doe</h3>
@@ -68,7 +70,6 @@
         {/each}
       </section>
     {/if}
-    {@const allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)))}
     {#if allLinks.length}
       <section class="elsewhere">
         <h3>Verder kijken</h3>
