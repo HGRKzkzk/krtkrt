@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PersonalPlace, ProfileBlock, ProfileLink, Theme, Typeface, ContactMode, BlockKind } from '$lib/personalPlace';
-  import { blankBlock, validExternalUrl } from '$lib/personalPlace';
+  import { blankBlock, validExternalUrl, linkSite } from '$lib/personalPlace';
+  import AreaPicker from '$lib/AreaPicker.svelte';
 
   export let place: PersonalPlace;
   export let person: string;
@@ -9,6 +10,10 @@
   export let onChange: (next: PersonalPlace) => void = () => {};
   export let onNameChange: (name: string) => void = () => {};
   let imageError = '';
+  $: intro = place.blocks.find((block) => block.kind === 'text' && block.text.trim());
+  $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && block.text.trim()) || (block.kind === 'image' && block.image)));
+  $: allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)));
+
 
   function change(part: Partial<PersonalPlace>) { onChange({ ...place, ...part }); }
   function updateBlock(id: string, partial: Partial<ProfileBlock>) {
@@ -50,39 +55,60 @@
 
 <div class="personal-place">
   <section class:ink={place.theme === 'ink'} class:colour={place.theme === 'kleur'} class:serif={place.typeface === 'serif'} class:mono={place.typeface === 'mono'} class="canvas">
-    <div class="canvas-head">
+    <header class="canvas-head">
       <h2>{person || 'Mijn plek'}</h2>
+      {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
       {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
-    </div>
-    <div class="blocks">
-      {#each place.blocks as block (block.id)}
-        <section class="piece">
-          {#if block.kind === 'text' && block.text.trim()}
-            <p class="authored-text">{block.text}</p>
-          {:else if block.kind === 'image' && block.image}
-            <figure><img src={block.image} alt={block.alt || 'Afbeelding op de persoonlijke plek'} />{#if block.text.trim()}<figcaption>{block.text}</figcaption>{/if}</figure>
-          {:else if block.kind === 'links'}
-            <div class="outbound-links">
-              {#each block.links.filter((l) => validExternalUrl(l.url)) as link (link.id)}
-                <div class="outbound-link">
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">{link.label || new URL(link.url).hostname}</a>
-                  {#if link.description}<span>{link.description}</span>{/if}
-                </div>
-              {/each}
+    </header>
+    {#if intro}<div class="introduction">{intro.text}</div>{/if}
+    {#if stories.length}
+      <section class="stories">
+        <h3>Wat ik verder zoal doe</h3>
+        {#each stories as item (item.id)}
+          {#if item.kind === 'text'}<p class="authored-text">{item.text}</p>
+          {:else}<figure><img src={item.image} alt={item.alt || 'Afbeelding op de persoonlijke plek'} />{#if item.text.trim()}<figcaption>{item.text}</figcaption>{/if}</figure>{/if}
+        {/each}
+      </section>
+    {/if}
+    {#if allLinks.length}
+      <section class="elsewhere">
+        <h3>Verder kijken</h3>
+        <div class="outbound-links">
+          {#each allLinks as link (link.id)}
+            <div class="outbound-link">
+              <a href={link.url} target="_blank" rel="noopener noreferrer" class="social-link">
+                    <span class="platform-symbol" aria-hidden="true">
+                      {#if linkSite(link.url).icon === 'instagram'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                      {:else if linkSite(link.url).icon === 'youtube'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3Z" fill="currentColor" stroke="none"/></svg>
+                      {:else if linkSite(link.url).icon === 'bandcamp'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5h14L16 19H2Z"/></svg>
+                      {:else if linkSite(link.url).icon === 'facebook'}
+                        <span class="platform-letter">f</span>
+                      {:else if linkSite(link.url).icon === 'spotify'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M5 10q8-3 14 1M6 13q7-2 12 1M7 16q6-1 10 1"/></svg>
+                      {:else}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-5 5-5 13 0 18M12 3c5 5 5 13 0 18"/></svg>
+                      {/if}
+                    </span>
+                    {linkSite(link.url).recognized ? linkSite(link.url).name : link.label || linkSite(link.url).name}
+                  </a>
+              {#if link.description}<span>{link.description}</span>{/if}
             </div>
-          {/if}
-        </section>
-      {/each}
-      {#if place.blocks.length === 0}<p class="empty">{owner ? 'Je kunt hier iets over jezelf laten zien. Een naam alleen is ook prima.' : 'Er is hier nog niets toegevoegd.'}</p>{/if}
-    </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+    {#if !intro && !stories.length && !allLinks.length}<p class="empty">{owner ? 'Dit is jouw plek. Je kunt iets vertellen, maar dat hoeft niet.' : 'Op deze plek is nog niets geschreven.'}</p>{/if}
     {#if place.contactMode !== 'none' && place.contactNote.trim()}
-      <div class="contact"><span>{place.contactMode === 'elsewhere' ? 'Verder praten' : 'Elkaar ontmoeten'}</span><p>{place.contactNote}</p></div>
+      <section class="contact"><h3>{place.contactMode === 'elsewhere' ? 'Zeg elders hallo' : 'Zeg gerust hallo'}</h3><p>{place.contactNote}</p></section>
     {/if}
   </section>
 
   {#if owner && editing}
     <div class="studio" aria-label="Richt mijn plek in">
-      <div class="studio-header"><h3>Richt je plek in</h3><p>Voeg toe wat je wilt. Je hoeft niets af te maken.</p></div>
+      <div class="studio-header"><h3>Vertel iets over jezelf</h3><p>De pagina heeft een vaste opbouw. Jij bepaalt de inhoud en hoeveel je laat zien.</p></div>
       <div class="settings">
         <div class="setting"><label for="person-name">Naam</label><input id="person-name" maxlength="40" value={person} oninput={(e) => onNameChange(e.currentTarget.value)} /></div>
         <div class="setting"><label for="profile-theme">Achtergrond</label><select id="profile-theme" value={place.theme} onchange={(e) => change({ theme: e.currentTarget.value as Theme })}><option value="papier">Papier</option><option value="ink">Donker</option><option value="kleur">Warm</option></select></div>
@@ -92,11 +118,14 @@
         <label for="profile-area">Buurt, wijk of stad (mag leeg)</label>
         <input id="profile-area" maxlength="80" value={place.area} placeholder="Bijvoorbeeld: Korvel, Tilburg" oninput={(e) => change({ area: e.currentTarget.value })}/>
         <label class="check"><input type="checkbox" checked={place.areaVisible} onchange={(e) => change({ areaVisible: e.currentTarget.checked })}/> Toon deze aanduiding op mijn plek</label>
-        <small>Dit is wat je zelf wilt delen, niet je woonadres. Je profiel verschijnt niet als woonmarker op de kaart.</small>
+        <small>Dit is wat je zelf wilt delen, niet je woonadres. Er wordt nooit een exact adres opgeslagen.</small>
+        <label>Mijn postcodegebied (optioneel)</label>
+        <AreaPicker area={place.mapArea} onChange={(mapArea) => change({ mapArea })}/>
+        <small>Bij zichtbaarheid verschijnt dit postcodegebied als vlak op de kaart, niet als woonpunt.</small>
       </div>
 
       <div class="pieces-editor">
-        <h4>Onderdelen</h4>
+        <h4>Verhalen, beelden en vindplaatsen</h4>
         {#each place.blocks as block, i (block.id)}
           <div class="block-editor">
             <div class="block-top"><strong>{block.kind === 'text' ? 'Tekst' : block.kind === 'image' ? 'Afbeelding' : 'Links'}</strong>
@@ -121,10 +150,16 @@
             {:else}
               {#each block.links as link (link.id)}
                 <div class="link-editor">
-                  <label for={'link-label-'+link.id}>Naam</label><input id={'link-label-'+link.id} maxlength="100" placeholder="Mijn Instagram, band, website…" value={link.label} oninput={(e) => updateLink(block, link.id, { label: e.currentTarget.value })}/>
-                  <label for={'link-url-'+link.id}>Link (https://)</label><input id={'link-url-'+link.id} maxlength="600" placeholder="https://…" value={link.url} oninput={(e) => updateLink(block, link.id, { url: e.currentTarget.value })}/>
+                  <label for={'link-url-'+link.id}>Link naar sociaal profiel of website (https://)</label><input id={'link-url-'+link.id} maxlength="600" placeholder="https://…" value={link.url} oninput={(e) => updateLink(block, link.id, { url: e.currentTarget.value })}/>
                   {#if link.url && !validExternalUrl(link.url)}<small class="error">Vul een geldig https-adres in.</small>{/if}
-                  <label for={'link-description-'+link.id}>Wat is daar te vinden?</label><input id={'link-description-'+link.id} maxlength="240" placeholder="Daar ben ik vooral actief…" value={link.description} oninput={(e) => updateLink(block, link.id, { description: e.currentTarget.value })}/>
+                  {#if validExternalUrl(link.url)}
+                    <small>Wordt getoond als: <strong>{linkSite(link.url).name}</strong>{linkSite(link.url).recognized ? ' (automatisch met icoon)' : ''}</small>
+                  {/if}
+                  {#if validExternalUrl(link.url) && !linkSite(link.url).recognized}
+                    <label for={'link-label-'+link.id}>Andere naam voor deze website (optioneel)</label>
+                    <input id={'link-label-'+link.id} maxlength="100" placeholder="Mijn blog, mijn band…" value={link.label} oninput={(e) => updateLink(block, link.id, { label: e.currentTarget.value })}/>
+                  {/if}
+                  <label for={'link-description-'+link.id}>Wat is daar te vinden? (optioneel)</label><input id={'link-description-'+link.id} maxlength="240" placeholder="Daar ben ik vooral actief…" value={link.description} oninput={(e) => updateLink(block, link.id, { description: e.currentTarget.value })}/>
                   <button class="quiet" onclick={() => updateBlock(block.id, { links: block.links.filter((x) => x.id !== link.id) })}>Link weghalen</button>
                 </div>
               {/each}
@@ -161,15 +196,24 @@
   .canvas.colour{background:#f3d9bc;color:#4b3028;border-color:#e0c5a9}
   .canvas.serif{font-family:Georgia,'Times New Roman',serif}
   .canvas.mono{font-family:'Courier New',monospace}
-  .canvas-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px;margin-bottom:28px}
-  .canvas h2{font-family:inherit;font-size:clamp(25px,4vw,38px);letter-spacing:-.5px;font-weight:500;margin:0}
+  .canvas-head{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-bottom:28px}
+  .canvas h2{font-family:inherit;font-size:clamp(27px,4vw,43px);letter-spacing:-.8px;line-height:1.13;font-weight:600;margin:0}
   .location{font-size:13px;opacity:.75}
-  .blocks{display:flex;flex-direction:column;gap:22px}
+  .introduction{font-size:clamp(17px,2.2vw,20px);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-width:690px;margin:0 0 28px}
+  .stories,.elsewhere,.contact{max-width:690px;margin-top:36px}
+  .stories h3,.elsewhere h3,.contact h3{font-family:inherit;font-size:20px;margin:0 0 17px;font-weight:600}
+  .stories .authored-text{margin:0 0 17px}
+  .stories figure{margin:20px 0 26px}
+  .elsewhere{padding-top:8px}
   .piece{max-width:680px;min-width:0}
   .authored-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(15px,2vw,18px);line-height:1.65;margin:0}
   figure{margin:0}figure img{width:100%;height:auto;max-height:620px;object-fit:contain;display:block}figcaption{font-size:12px;margin-top:6px;opacity:.7}
   .outbound-links{display:flex;flex-direction:column;gap:13px}.outbound-link{display:flex;align-items:baseline;gap:4px 13px;flex-wrap:wrap}
   .outbound-link a{color:inherit;font-weight:600;text-underline-offset:3px;overflow-wrap:anywhere}
+  .social-link{display:inline-flex;align-items:center;gap:8px}
+  .platform-symbol{width:23px;height:23px;border:1px solid currentColor;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .platform-letter{font:bold 18px Arial,sans-serif}
+  .area-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12px;color:#566358}
   .outbound-link span{font-size:13px;opacity:.8}
   .contact{border-top:1px solid currentColor;margin-top:28px;padding-top:15px;max-width:680px}
   .contact span{font-size:12px;opacity:.7}.contact p{margin:6px 0 0;white-space:pre-wrap}

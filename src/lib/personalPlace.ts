@@ -1,3 +1,5 @@
+import { cleanMapArea } from './mapArea';
+import type { MapArea } from './mapArea';
 export type Theme = 'papier' | 'ink' | 'kleur';
 export type Typeface = 'sans' | 'serif' | 'mono';
 export type ContactMode = 'none' | 'elsewhere' | 'in-person';
@@ -15,6 +17,7 @@ export type PersonalPlace = {
   theme: Theme;
   typeface: Typeface;
   area: string;
+  mapArea: MapArea | null;
   areaVisible: boolean;
   contactMode: ContactMode;
   contactNote: string;
@@ -32,7 +35,7 @@ export const blankBlock = (kind: BlockKind): ProfileBlock => ({
 });
 
 export function emptyPlace(): PersonalPlace {
-  return { theme: 'papier', typeface: 'sans', area: '', areaVisible: false, contactMode: 'none', contactNote: '', blocks: [] };
+  return { theme: 'papier', typeface: 'sans', area: '', mapArea: null, areaVisible: false, contactMode: 'none', contactNote: '', blocks: [] };
 }
 
 export function validExternalUrl(value: string): boolean {
@@ -78,9 +81,30 @@ export function cleanPlace(raw: unknown): PersonalPlace {
     theme: themes.includes(x.theme as Theme) ? x.theme as Theme : 'papier',
     typeface: fonts.includes(x.typeface as Typeface) ? x.typeface as Typeface : 'sans',
     area: String(x.area || '').slice(0, 80),
+    mapArea: cleanMapArea(x.mapArea),
     areaVisible: x.areaVisible === true,
     contactMode: contacts.includes(x.contactMode as ContactMode) ? x.contactMode as ContactMode : 'none',
     contactNote: String(x.contactNote || '').slice(0, 280),
     blocks
   };
+}
+
+export type LinkSite = { name: string; icon: string; recognized: boolean };
+export function linkSite(value: string): LinkSite {
+  if (!validExternalUrl(value)) return { name: 'Website', icon: 'web', recognized: false };
+  const host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+  const platforms: { hosts: string[]; name: string; icon: string }[] = [
+    { hosts: ['instagram.com'], name: 'Instagram', icon: 'instagram' },
+    { hosts: ['facebook.com', 'fb.com'], name: 'Facebook', icon: 'facebook' },
+    { hosts: ['bandcamp.com'], name: 'Bandcamp', icon: 'bandcamp' },
+    { hosts: ['youtube.com', 'youtu.be'], name: 'YouTube', icon: 'youtube' },
+    { hosts: ['bsky.app'], name: 'Bluesky', icon: 'bluesky' },
+    { hosts: ['mastodon.social', 'mastodon.online'], name: 'Mastodon', icon: 'mastodon' },
+    { hosts: ['tiktok.com'], name: 'TikTok', icon: 'tiktok' },
+    { hosts: ['linkedin.com'], name: 'LinkedIn', icon: 'linkedin' },
+    { hosts: ['soundcloud.com'], name: 'SoundCloud', icon: 'soundcloud' },
+    { hosts: ['open.spotify.com', 'spotify.com'], name: 'Spotify', icon: 'spotify' }
+  ];
+  const platform = platforms.find((p) => p.hosts.some((h) => host === h || host.endsWith('.' + h)));
+  return platform ? { name: platform.name, icon: platform.icon, recognized: true } : { name: host, icon: 'web', recognized: false };
 }
