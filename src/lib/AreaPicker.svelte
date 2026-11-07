@@ -46,7 +46,7 @@
       source.clear();
       source.addFeatures(features);
       const extent = source.getExtent();
-      map.getView().fit(extent, { padding: [24, 24, 24, 24], maxZoom: 13, duration: 200 });
+      if (extent) map.getView().fit(extent, { padding: [24, 24, 24, 24], maxZoom: 13, duration: 200 });
       if (save) onChange({ pc4: code });
       message = 'Postcodegebied ' + code + ' geselecteerd.';
     } catch (error) {
