@@ -61,7 +61,6 @@
     <header class="canvas-head">
       <h2>{person || 'Mijn plek'}</h2>
       {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
-      {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
     </header>
     {#if intro}
       <div class="introduction">
