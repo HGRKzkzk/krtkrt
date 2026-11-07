@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Map from 'ol/Map.js';
+  import OLMap from 'ol/Map.js';
   import View from 'ol/View.js';
   import TileLayer from 'ol/layer/Tile.js';
   import VectorLayer from 'ol/layer/Vector.js';
@@ -28,7 +28,7 @@
   export let onPerson: (name: string) => void = () => {};
 
   let target: HTMLDivElement;
-  let map: Map;
+  let map: OLMap;
   let selectedArea: string | null = null;
   let activeLoad = 0;
   const postsSource = new VectorSource();
@@ -109,7 +109,7 @@
   }
   function chooseArea(pc4: string) {selectedArea = selectedArea===pc4 ? null : pc4;}
   onMount(() => {
-    map = new Map({
+    map = new OLMap({
       target,
       layers:[
         new TileLayer({source:new OSM()}),
