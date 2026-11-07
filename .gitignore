@@ -5,3 +5,7 @@ build/
 .env.*
 !.env.example
 .DS_Store
+
+# Local Docker/PocketBase persistence (never commit real or test identities)
+data/
+infra/data/
