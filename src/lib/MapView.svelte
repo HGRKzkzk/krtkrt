@@ -12,7 +12,8 @@
   import { getCenter } from 'ol/extent.js';
   import { fromLonLat } from 'ol/proj.js';
   import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style.js';
-  import { postcodeGeometry } from './mapArea';
+  import { postcodeGeometry, displayAreaName } from './mapArea';
+  import Avatar from './Avatar.svelte';
   import type { MapArea } from './mapArea';
   import type { Post } from './types';
   import type { DemoNeighbour } from './demoNeighbours';
@@ -23,6 +24,7 @@
   export let onSelect: (id: string) => void = () => {};
   export let ownArea: MapArea | null = null;
   export let ownName = 'Ik';
+  export let ownAvatar = '';
   export let onOwnProfile: () => void = () => {};
   export let neighbours: DemoNeighbour[] = [];
   export let onPerson: (name: string) => void = () => {};
@@ -30,6 +32,7 @@
   let target: HTMLDivElement;
   let map: OLMap;
   let selectedArea: string | null = null;
+  let selectedAreaLabel = '';
   let activeLoad = 0;
   const postsSource = new VectorSource();
   const areaSource = new VectorSource();
@@ -39,14 +42,14 @@
     [5.090,51.542],[5.074,51.570]
   ];
   $: groups = (() => {
-    const result = new Map<string, { name:string; mine:boolean }[]>();
+    const result = new Map<string, { name:string; mine:boolean; avatar:string }[]>();
     for (const person of neighbours) {
       if (!result.has(person.pc4)) result.set(person.pc4, []);
-      result.get(person.pc4)?.push({ name:person.name, mine:false });
+      result.get(person.pc4)?.push({ name:person.name, mine:false, avatar:'' });
     }
     if (ownArea?.pc4) {
       if (!result.has(ownArea.pc4)) result.set(ownArea.pc4, []);
-      result.get(ownArea.pc4)?.push({ name:ownName || 'Ik', mine:true });
+      result.get(ownArea.pc4)?.push({ name:ownName || 'Ik', mine:true, avatar:ownAvatar });
     }
     return result;
   })();
@@ -132,6 +135,11 @@
   $: if (map && posts && selectedId !== undefined) renderPosts();
   $: if (map && groups) void renderAreas();
   $: if (selectedArea && !groups.has(selectedArea)) selectedArea=null;
+  $: if (selectedArea) {
+    const code = selectedArea;
+    selectedAreaLabel = 'Gebied ' + code;
+    void displayAreaName(code).then((label) => {if(selectedArea===code)selectedAreaLabel=label;});
+  }
 </script>
 
 <div class="map-shell">
@@ -139,13 +147,16 @@
   {#if selectedArea}
     <section class="area-panel" aria-label={'Mensen in postcodegebied '+selectedArea}>
       <div class="panel-heading">
-        <div><strong>Gebied {selectedArea}</strong><span>{selectedPeople.length} {selectedPeople.length===1?'persoon':'personen'} · voorbeeldprofielen</span></div>
+        <div><strong>{selectedAreaLabel || 'Gebied ' + selectedArea}</strong><span>{selectedPeople.length} {selectedPeople.length===1?'persoon':'personen'} · voorbeeldprofielen</span></div>
         <button onclick={() => selectedArea=null} aria-label="Sluit profielenlijst">×</button>
       </div>
       <div class="people">
         {#each selectedPeople as person}
           <button class:own-person={person.mine} onclick={() => {if(person.mine) onOwnProfile(); else onPerson(person.name);}}>
-            <span class="person-label">{person.mine ? (person.name || 'Mijn plek') : person.name}{#if person.mine}<span class="own-hint">Jij · Mijn plek</span>{/if}</span>
+            <span class="person-main">
+              <Avatar name={person.name} image={person.avatar}/>
+              <span class="person-label">{person.mine ? (person.name || 'Mijn plek') : person.name}{#if person.mine}<span class="own-hint">Jij · Mijn plek</span>{/if}</span>
+            </span>
             <span aria-hidden="true">↗</span>
           </button>
         {/each}
@@ -168,6 +179,7 @@
   .people button.own-person{background:#f8e9df;color:#653c26;border-left:3px solid #a55e3c;padding-left:11px}
   .people button.own-person:hover,.people button.own-person:focus-visible{background:#f3dfd0}
   .person-label{display:flex;flex-direction:column;gap:2px}
+  .person-main{display:flex;align-items:center;gap:10px;min-width:0}
   .own-hint{font-size:11px;color:#86563f}
   .legend{position:absolute;bottom:12px;left:12px;padding:6px 9px;background:#fafaf8ed;z-index:1;max-width:70%;font-size:11px;color:#5d6d62}
   @media(max-width:760px){.map-shell,.map{min-height:min(52vh,470px)}.area-panel{top:10px;right:10px;max-height:70%}.legend{max-width:85%}}
