@@ -52,3 +52,13 @@ Dit is een onderhoudscontrole, geen garantie dat elk beschreven feit automatisch
 Het optionele `personalPlace.avatar` bevat in deze browserdemo een vierkant uitgesneden, verkleinde JPEG-data-URL van circa 160×160 pixels; de invoer accepteert JPG, PNG en WebP tot 5 MB. Het opgeslagen resultaat is op lengte begrensd. De herbruikbare component `src/lib/Avatar.svelte` toont het lokale beeld of anders initialen. Dezelfde bron wordt aan de PC4-groepslijst en eigen bijdragen doorgegeven. Er is **geen serverupload of gedeeld gebruikersprofiel**.
 
 `src/lib/mapArea.ts` vraagt voor een bestaande PC4 optioneel een plaatslabel op via de PDOK Locatieserver; alleen wanneer de gevonden plaatsnaam eenduidig bij die vier cijfers hoort wordt deze gebruikt. Anders verschijnt het neutrale PC4-label. De postcodegrenzen blijven van Esri komen. Het externe PDOK-verzoek deelt de gekozen PC4-code, niet een adres.
+
+## Draagbare Docker Compose-infrastructuur (eerste fase)
+
+`infra/compose.yaml` definieert dezelfde twee services voor development en Raspberry Pi: **web** (SvelteKit statisch gebouwd en door Nginx geserveerd) en **backend** (gepinde PocketBase 0.40.6 met SQLite). De bestanden `infra/compose.dev.yaml` en `infra/compose.pi.yaml` voegen alleen omgevingsspecifieke instellingen toe. `infra/Dockerfile.web` en `infra/pocketbase/Dockerfile` werken met Docker Linux amd64 en arm64; Compose bouwt momenteel lokaal voor het hostplatform. De Pi 3 B+ vereist Raspberry Pi OS Lite 64-bit.
+
+Nginx stuurt uitsluitend `/api/` naar PocketBase door; `/_/` wordt via de webpoort geweigerd. De webpoort is op de host beperkt tot `127.0.0.1:8080`. Development stelt de PocketBase-beheerpoort alleen op `127.0.0.1:8090` beschikbaar; Pi niet. Externe HTTPS/tunnel is **nog niet opgenomen**.
+
+De PocketBase-data staan buiten de container in een per omgeving geconfigureerde map (`PB_DATA_DIR`) en zijn uitgesloten van Git. Development en Pi gebruiken verschillende projectnamen en opslag. De eerste backend bevat nog **geen appcollecties, uitnodigingen of accountintegratie**; de huidige frontend houdt haar lokale demogedrag.
+
+Voor de pilot volgt nog: migratieschema, uitnodigings- en registratieflow, gebruikers- en kringrechten, databaseback-ups met hersteltest, imageversies/digests, reproduceerbare CI ARM64-images en beveiligde externe toegang. Installatie en testprocedure: [infra/README.md](infra/README.md).
