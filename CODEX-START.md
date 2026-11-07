@@ -1,15 +1,19 @@
-# Eerste opdracht voor Codex — issue #1
+# Codex — vervolgopdrachten
 
-Werk op de draft-PR van `feat/mvp-01-import`. Behandel de geïmporteerde demo als **ongeteste broncode**.
+De eerste code-import (PR #2) en de navigatie-/profielreparatie (PR #4) zijn afgerond. Dit document is bijgewerkt omdat de eerdere opdracht uitging van een afzonderlijk tabblad **Ontdek**, dat door een later productbesluit is vervallen.
 
-1. Installeer dependencies en draai `npm run check` en `npm run build`.
-2. Repareer compatibiliteits-, TypeScript- en Svelte-problemen.
-3. Controleer op mobiel en desktop de drie ingangen: Kaart / Kringen / Ontdek.
-4. Test lokaal: fictieve oproep plaatsen en verwijderen, kringbericht plaatsen, handmatig verband toevoegen, lokaal bewaren en resetten.
-5. Controleer dat geen privé-adressen of persoonsgegevens worden gepubliceerd.
-6. Beschrijf de beperkingen: geen echte accounts, geen gedeelde chat, geen toegangsbeveiliging.
-7. Voeg zo mogelijk kleine geautomatiseerde tests of duidelijke reproduceerbare handmatige teststappen toe.
+## Actuele productrichting
+- Hoofdnavigatie: **Kaart**, **Kringen**, **Mijn plek**.
+- Ontdekking ontstaat **impliciet** via de bijdragen, profielen en ontmoetingen van mensen.
+- Geen afzonderlijke route-editor, geen Culturele Match-scores en geen expliciete verplichting om verbanden te leggen.
+- Vrije persoonlijke expressie, inclusief tegenstrijdigheid en afkeer, blijft essentieel.
+- Externe verwijzingen mogen belangrijker zijn dan interactie binnen de hub.
 
-Niet implementeren: Supabase, AI-matching, productieauthenticatie, realtimediensten of uitgebreid profileren. Licht aanvullende ontwerpkeuzes toe in de PR; merge niet zelf.
+## Bij nieuwe codewijzigingen
+1. Lees `PRODUCT.md`, `ARCHITECTURE.md` en `AGENTS.md`.
+2. Voer `npm install`, `npm run check` en `npm run build` uit.
+3. Test drie primaire tabbladen, kaartmarkers, profielbewerking en berichten; geen regressie in lokale opslag.
+4. Houd alle testdata fictief. Bewaar geen privéadressen of gevoelige gegevens.
+5. Maak kleine reviewbare PR's; merge niet automatisch.
 
-Zie ook `AGENTS.md`, `PRODUCT.md` en issue #1.
+De huidige demo gebruikt browseropslag, **geen** echte accounts, gedeelde chat of serverafgedwongen rechten.
