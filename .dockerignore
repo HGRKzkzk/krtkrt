@@ -1,0 +1,10 @@
+node_modules
+.svelte-kit
+build
+data
+.git
+.github
+.env
+.env.*
+**/pb_data
+**/.DS_Store
