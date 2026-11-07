@@ -71,7 +71,9 @@
         }));
       }
       profileSource.addFeatures(features);
-      const point = new Feature({geometry:new Point(getCenter(profileSource.getExtent())), ownProfile:true});
+      const extent = profileSource.getExtent();
+      if (!extent) return;
+      const point = new Feature({geometry:new Point(getCenter(extent)), ownProfile:true});
       point.setStyle(new Style({
         image:new CircleStyle({radius:19, fill:new Fill({color:'#a55e3c'}),stroke:new Stroke({color:'#fff',width:3})}),
         text:new Text({text:'IK',font:'bold 12px sans-serif',fill:new Fill({color:'#fff'})})
