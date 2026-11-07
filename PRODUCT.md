@@ -28,3 +28,18 @@ Een schildergroep als eerste kring. Binnen die kring kunnen deelnemers materiale
 - Korte en eerlijke demovermelding blijft aanwezig, maar domineert niet de eerste blik.
 - Minimalisme is geen functionaliteitsreductie: externe links, vrije expressie, afkeer, kringen en uitleg over zichtbaarheid blijven mogelijk.
 - Toegankelijkheid is leidend: tekstlabels, focusstijlen, betekenisvolle knoppen en responsief gedrag.
+
+
+## Mijn plek — persoonlijke ruimte (ontwerpbesluit)
+Mijn plek is geen profielvolledigheidsopdracht maar een persoonlijke voordeur waar iemand zich op eigen wijze kan uitdrukken. De bezoeker kan er iets van een mens leren kennen; een ontmoeting kan daarna juist buiten krtkrt verdergaan.
+
+- **Vrijwillige, geleidelijke zelfonthulling:** naam alleen is voldoende. Geen verplichte bio, foto, interesses of voltooide profielstappen.
+- **Vormvrijheid:** deelnemers kunnen tekst, eigen beeld en verwijzingen toevoegen en naar eigen inzicht ordenen, met een paar duidelijke vormgevingskeuzes. Geen vrije scripts of onveilige HTML.
+- **Externe vindplaatsen zijn volwaardig:** Instagram, Bandcamp, een eigen website of iets anders. Geen verplicht intern contactkanaal, geen prikkel om elders actieve mensen binnen de hub te houden.
+- **Bereikbaarheid is optioneel:** een deelnemer kan aangeven liever elders of in het echt aangesproken te worden, of geen contactverzoek via het profiel te wensen.
+- **Buurt of wijk is vrijwillig:** zelfgekozen wijk/stad als zachte situering, nooit een verplicht woonadres, GPS-positie of publieke woonmarker.
+- **Privacy naast zelfonthulling:** de mate van zichtbaar willen zijn is iets anders dan de technische toegang. Deze lokale demo is nog geen afgeschermde multi-useromgeving; er mogen geen echte deelnemersgegevens worden opgeslagen in de repository.
+- **Geen template-dwang:** blokken en hun volgorde zijn van de gebruiker. Rustige, bijna lege en uitbundige pagina's zijn allebei volwaardig.
+
+### Eerste technische snede
+Een blokkeneditor met verplaatsbare tekst-, afbeeldings- en linkblokken, drie rustige kleurvarianten, drie letterkeuzes, een optionele globale buurtaanduiding en contactvoorkeur. Afbeeldingen worden als kleine lokale databestanden in de browser opgeslagen (maximaal 300 kB per bestand); er is geen uploadservice of publiek profiel. Vrije HTML/CSS, rich media en toegang per kring blijven latere beslissingen.
