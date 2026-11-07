@@ -9,7 +9,7 @@
   import GeoJSON from 'ol/format/GeoJSON.js';
   import { fromLonLat } from 'ol/proj.js';
   import { Fill, Stroke, Style } from 'ol/style.js';
-  import { postcodeGeometry, validPc4 } from '$lib/mapArea';
+  import { postcodeGeometry, parsePostcode } from '$lib/mapArea';
   import type { MapArea } from '$lib/mapArea';
 
   export let area: MapArea | null = null;
@@ -35,11 +35,12 @@
   });
 
   async function showArea(code: string, save: boolean) {
-    if (!validPc4(code)) { message = 'Vul een viercijferige postcode in.'; return; }
+    const postcode = parsePostcode(code);
+    if (!postcode) { message = 'Vul vier cijfers of een volledige Nederlandse postcode in, bijvoorbeeld 5038 AB.'; return; }
     const id = ++requestId;
     checking = true; message = '';
     try {
-      const collection = await postcodeGeometry(code);
+      const collection = await postcodeGeometry(postcode);
       if (id !== requestId || !map) return;
       const features = geojson.readFeatures(collection, { featureProjection: 'EPSG:3857' });
       if (!features.length) throw new Error('Geen postcodegebied gevonden.');
@@ -47,8 +48,8 @@
       source.addFeatures(features);
       const extent = source.getExtent();
       if (extent) map.getView().fit(extent, { padding: [24, 24, 24, 24], maxZoom: 13, duration: 200 });
-      if (save) onChange({ pc4: code });
-      message = 'Postcodegebied ' + code + ' geselecteerd.';
+      if (save) { pc4 = postcode; onChange({ pc4: postcode }); }
+      message = 'Postcodegebied ' + postcode + ' geselecteerd.';
     } catch (error) {
       if (id !== requestId) return;
       message = error instanceof Error ? error.message : 'Postcodegebied kon niet worden geladen.';
@@ -59,16 +60,16 @@
 
 <div class="picker">
   <form class="entry" onsubmit={(e) => { e.preventDefault(); void showArea(pc4.trim(), true); }}>
-    <label for="area-pc4">Postcodegebied (vier cijfers)</label>
+    <label for="area-pc4">Postcode of postcodegebied</label>
     <div class="controls">
-      <input id="area-pc4" inputmode="numeric" maxlength="4" pattern="[1-9][0-9]{3}" placeholder="Bijv. 5038" bind:value={pc4} />
+      <input id="area-pc4" inputmode="text" maxlength="7" pattern="[1-9][0-9]{3}([ ]?[A-Za-z]{2})?" title="Vier cijfers of volledige Nederlandse postcode, bijvoorbeeld 5038 AB" placeholder="5038 AB" autocomplete="off" bind:value={pc4} />
       <button type="submit" disabled={checking}>{checking ? 'Zoeken…' : 'Toon gebied'}</button>
       {#if area}<button type="button" class="remove" onclick={clear}>Wissen</button>{/if}
     </div>
   </form>
   <div bind:this={target} class="map" aria-label="Kaart waarop de grens van het gekozen viercijferige postcodegebied verschijnt"></div>
   {#if message}<p class="message" role="status">{message}</p>{/if}
-  <p class="hint">Je deelt alleen een postcodegebied, geen straat of huisnummer. De kaart toont een <em>gebied</em>, geen woonpunt. Bron postcodevlakken: Esri Nederland (2026).</p>
+  <p class="hint">Je kunt de volledige postcode invullen; alleen de eerste vier cijfers worden bewaard en getoond. Geen straat, huisnummer of postcodeletters. De kaart toont een <em>gebied</em>, geen woonpunt. Bron postcodevlakken: Esri Nederland (2026).</p>
 </div>
 <style>
   .picker{border:1px solid #d7ddd6;background:#fff}
