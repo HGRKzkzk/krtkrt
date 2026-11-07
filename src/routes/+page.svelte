@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import MapView from '$lib/MapView.svelte';
+  import PersonalPlaceView from '$lib/PersonalPlace.svelte';
+  import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
+  import type { PersonalPlace } from '$lib/personalPlace';
   import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
   import type { Post, Message, Connection, Kind, Visibility } from '$lib/types';
 
@@ -14,6 +17,7 @@
   // Preserve historical notes written in older demo versions; no route editor.
   let connections: Connection[] = [...demoConnections];
   let myProfile: Profile = { bio: '', appreciates: '', dislikes: '', links: '' };
+  let personalPlace: PersonalPlace = emptyPlace();
   let screenName = 'Gast';
   let channel = 'algemeen';
   let showComposer = false;
@@ -36,8 +40,8 @@
   $: currentPost = posts.find((p) => p.id === selectedPostId) ?? null;
   $: profileName = selectedPerson || screenName || 'Gast';
   $: shownProfile = selectedPerson
-    ? demoPeople[selectedPerson] ?? { bio: 'Nog geen introductie.', appreciates: '', dislikes: '', links: '' }
-    : myProfile;
+    ? fromLegacy(demoPeople[selectedPerson] ?? { bio: '', appreciates: '', dislikes: '', links: '' })
+    : personalPlace;
   $: profilePosts = posts.filter((p) => p.author === profileName);
   $: profileNotes = connections.filter((c) => c.author === profileName);
 
@@ -58,6 +62,7 @@
             links: String(data.myProfile.links || '')
           };
         }
+        personalPlace = data.personalPlace ? cleanPlace(data.personalPlace) : fromLegacy(myProfile);
       }
     } catch {
       notice = 'De opgeslagen demo kon niet worden geladen.';
@@ -67,7 +72,7 @@
   function persist() {
     if (!stored) return;
     try {
-      localStorage.setItem(key, JSON.stringify({ posts, messages, connections, screenName, myProfile }));
+      localStorage.setItem(key, JSON.stringify({ posts, messages, connections, screenName, myProfile, personalPlace }));
     } catch {
       notice = 'Opslaan in deze browser lukt niet.';
     }
@@ -110,6 +115,7 @@
     messages = [...demoMessages];
     connections = [...demoConnections];
     myProfile = { bio: '', appreciates: '', dislikes: '', links: '' };
+    personalPlace = emptyPlace();
     screenName = 'Gast';
     selectedPerson = null;
     selectedPostId = 'p1';
@@ -215,36 +221,31 @@
   {:else}
     <main class="content-view profile-view">
       <div class="section-title">
-        <h1>{selectedPerson || screenName || 'Mijn plek'}</h1>
-        {#if selectedPerson}<button class="action-link" onclick={() => openPerson(screenName)}>Mijn plek</button>{:else}<button class="action-link" onclick={() => editingProfile = !editingProfile}>{editingProfile ? 'Gereed' : 'Bewerken'}</button>{/if}
+        <h1>{selectedPerson ? 'Bij ' + profileName : 'Mijn plek'}</h1>
+        {#if selectedPerson}
+          <button class="action-link" onclick={() => openPerson(screenName)}>Terug naar mijn plek</button>
+        {:else}
+          <button class="action-link" onclick={() => editingProfile = !editingProfile}>{editingProfile ? 'Klaar' : 'Richt mijn plek in'}</button>
+        {/if}
       </div>
-      {#if !selectedPerson && editingProfile}
-        <form class="profile-form" onsubmit={(event) => {event.preventDefault(); persist(); editingProfile = false;}}>
-          <label for="display-name">Naam</label><input id="display-name" bind:value={screenName} maxlength="40" onblur={persist} />
-          <label for="profile-bio">Over mij</label><textarea id="profile-bio" bind:value={myProfile.bio} rows="4" maxlength="1000" placeholder="Vertel iets over jezelf."></textarea>
-          <label for="profile-appreciates">Wat me aanspreekt</label><textarea id="profile-appreciates" bind:value={myProfile.appreciates} rows="3" maxlength="700"></textarea>
-          <label for="profile-dislikes">Wat me tegenstaat of waar ik over twijfel</label><textarea id="profile-dislikes" bind:value={myProfile.dislikes} rows="3" maxlength="700"></textarea>
-          <label for="profile-links">Links (één https-adres per regel)</label><textarea id="profile-links" bind:value={myProfile.links} rows="3" maxlength="1200"></textarea>
-          <button type="submit" class="solid-button">Bewaren</button>
-        </form>
-      {:else}
-        <section class="profile-body">
-          <p class="profile-bio">{shownProfile.bio || (!selectedPerson ? 'Vertel hier iets over jezelf.' : 'Nog geen introductie.')}</p>
-          {#if shownProfile.appreciates}<div class="profile-field"><h2>Wat me aanspreekt</h2><p>{shownProfile.appreciates}</p></div>{/if}
-          {#if shownProfile.dislikes}<div class="profile-field"><h2>Wat me tegenstaat of waar ik over twijfel</h2><p>{shownProfile.dislikes}</p></div>{/if}
-          {#each links(shownProfile.links) as link}<p class="outbound"><a href={link} target="_blank" rel="noopener noreferrer">{link}</a></p>{/each}
-        </section>
-        <section class="contributions">
-          <h2>Bijdragen</h2>
-          {#if profilePosts.length === 0 && profileNotes.length === 0}<p class="muted">Nog geen bijdragen.</p>{/if}
-          {#each profilePosts as post (post.id)}
-            <div class="contribution"><span class="post-meta">{post.kind} · {when(post.createdAt)}</span><p>{post.text}</p><button class="action-link" onclick={() => {selectedPostId = post.id; tab = 'kaart';}}>Op de kaart</button></div>
-          {/each}
-          {#each profileNotes as note (note.id)}
-            <div class="contribution"><span class="post-meta">Eerdere notitie</span><p>{note.reason}</p></div>
-          {/each}
-        </section>
-      {/if}
+      <PersonalPlaceView
+        place={shownProfile}
+        person={profileName}
+        owner={!selectedPerson}
+        editing={!selectedPerson && editingProfile}
+        onChange={(next) => {personalPlace = next; persist();}}
+        onNameChange={(next) => {screenName = next; persist();}}
+      />
+      <section class="contributions">
+        <h2>Bijdragen</h2>
+        {#if profilePosts.length === 0 && profileNotes.length === 0}<p class="muted">Nog geen bijdragen.</p>{/if}
+        {#each profilePosts as post (post.id)}
+          <div class="contribution"><span class="post-meta">{post.kind} · {when(post.createdAt)}</span><p>{post.text}</p><button class="action-link" onclick={() => {selectedPostId = post.id; tab = 'kaart';}}>Op de kaart</button></div>
+        {/each}
+        {#each profileNotes as note (note.id)}
+          <div class="contribution"><span class="post-meta">Eerdere notitie</span><p>{note.reason}</p></div>
+        {/each}
+      </section>
     </main>
   {/if}
 
