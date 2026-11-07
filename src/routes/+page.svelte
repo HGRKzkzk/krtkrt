@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import MapView from '$lib/MapView.svelte';
   import PersonalPlaceView from '$lib/PersonalPlace.svelte';
+  import { demoNeighbours, demoNeighbourPlace } from '$lib/demoNeighbours';
   import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
   import type { PersonalPlace } from '$lib/personalPlace';
   import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
@@ -40,7 +41,9 @@
   $: currentPost = posts.find((p) => p.id === selectedPostId) ?? null;
   $: profileName = selectedPerson || screenName || 'Gast';
   $: shownProfile = selectedPerson
-    ? fromLegacy(demoPeople[selectedPerson] ?? { bio: '', appreciates: '', dislikes: '', links: '' })
+    ? (demoNeighbours.find((person) => person.name === selectedPerson)
+      ? demoNeighbourPlace(demoNeighbours.find((person) => person.name === selectedPerson)!)
+      : fromLegacy(demoPeople[selectedPerson] ?? { bio: '', appreciates: '', dislikes: '', links: '' }))
     : personalPlace;
   $: profilePosts = posts.filter((p) => p.author === profileName);
   $: profileNotes = connections.filter((c) => c.author === profileName);
@@ -153,8 +156,11 @@
       <section class="map-area" aria-label="Kaart van de buurt">
         <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id}
           ownArea={personalPlace.areaVisible ? personalPlace.mapArea : null}
+          ownName={screenName}
+          neighbours={demoNeighbours}
+          onPerson={openPerson}
           onOwnProfile={() => {selectedPerson = null; tab = 'profiel'; editingProfile = false;}} />
-        <div class="map-caption">Voorbeeldpunten op buurtniveau, geen woonadressen.</div>
+        <div class="map-caption">Fictieve proefpersonen in postcodegebied 5041. De kaart toont aantallen per postcodegebied, geen woonadressen.</div>
       </section>
       <aside class="sidebar" aria-label="Oproepen">
         <div class="sidebar-head">
