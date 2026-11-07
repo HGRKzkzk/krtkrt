@@ -50,3 +50,10 @@ Deelnemers kunnen zelf op de kaart een **globaal gebied** kiezen. De opgeslagen 
 Voor bekende externe platforms zoals Instagram, Bandcamp, YouTube, Facebook, Bluesky, Spotify en LinkedIn leiden we de naam automatisch uit het webadres af. De eigenaar kan een persoonlijke toelichting toevoegen. Voor een onbekende website blijft een vrije naam mogelijk. Standaardiconen worden lokaal getekend, zonder trackers, externe scripts of faviconaanroepen.
 
 Een echte multi-user implementatie vergt aparte autorisatie voor de zichtbaarheid van profielgebieden, ook vóór gegevens naar een client gestuurd worden. De huidige browserdemo is geen echte publieke buurtkaart en levert geen persoonsverificatie.
+
+## Correctie gebiedskeuze en profielstramien
+- De eerdere vrije kaartklik en afgeronde cirkel zijn vervangen door een **zelfgekozen viercijferig postcodegebied (PC4)**. De grens wordt op aanvraag geladen uit de Esri Nederland-dataset *Postcodevlakken PC4* (januari 2026). Een PC4-gebied is geen officiële CBS-wijk of -buurt en kan daar overheen vallen.
+- De selectie slaat alleen de vier cijfers op. De externe kaartdienst ontvangt de opgezochte PC4-code en de kaart gebruikt OSM-tegels. Als de kaartdienst faalt, verschijnt geen fictieve gebiedsgrens.
+- Verouderde lokale circulaire kaartselecties worden niet stilzwijgend omgezet in postcodes: die keuze moet de gebruiker opnieuw maken.
+- De persoonlijke pagina krijgt een vaste redactionele structuur: een grote persoonskop, introductie, persoonlijke verhalen en beelden, vindplaatsen elders, contactvoorkeur. De inhoud blijft vrijwillig en eigen; de pagina vraagt niet om profielvolledigheid.
+- De kaartvisualisatie blijft alleen zichtbaar na uitdrukkelijke inschakeling. In een echte multi-useromgeving moeten serverrechten en schaalniveaus op privacy worden getoetst voordat iemand anders de regio kan opvragen.
