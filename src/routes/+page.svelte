@@ -10,7 +10,7 @@
   import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
   import type { PersonalPlace } from '$lib/personalPlace';
   import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
-  import type { Post, Message, Connection, Kind, Visibility } from '$lib/types';
+  import type { Post, Message, Connection, Kind } from '$lib/types';
 
   type Tab = 'kaart' | 'kringen' | 'profiel';
   type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
@@ -31,7 +31,6 @@
   let editingProfile = false;
   let postText = '';
   let postKind: Kind = 'vraag';
-  let postVisibility: Visibility = 'kring';
   let messageText = '';
   let notice = '';
   let stored = false;
@@ -323,7 +322,7 @@
             <p class="muted">Lidmaatschap zegt niets over de woonplek van deze mensen.</p>
             <div class="member-list">
               {#each activeCircle.memberNames as member}
-                <button onclick={() => openPerson(member)}><Avatar name={member} image={member === 'Gast' ? (personalPlace.avatar || '') : ''}/><span>{member === 'Gast' ? screenName : member}</span></button>
+                <button onclick={() => openPerson(member === 'Gast' ? screenName : member)}><Avatar name={member === 'Gast' ? screenName : member} image={member === 'Gast' ? (personalPlace.avatar || '') : ''}/><span>{member === 'Gast' ? screenName : member}</span></button>
               {/each}
             </div>
           </section>
