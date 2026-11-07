@@ -62,14 +62,11 @@
 
 <div class="map-shell">
   <div bind:this={target} class="map" aria-label="Interactieve kaart met fictieve gebiedsmarkers"></div>
-  <div class="map-note">
-    <strong>{posts.length} oproepen en bijdragen</strong>
-    <span>De punten duiden voorbeeldgebieden aan. Ze tonen <b>geen</b> woonadressen of werkelijke ophaalplekken.</span>
   </div>
-</div>
 <style>
-  .map-shell{position:relative;border-radius:16px;overflow:hidden;border:1px solid #d9ddd4;background:#e5e9e0}
-  .map{height:350px;width:100%}
-  .map-note{position:absolute;left:12px;bottom:12px;right:12px;max-width:350px;display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:rgba(255,255,255,.96);box-shadow:0 3px 14px #10251b17;border-radius:10px;font-size:12px;pointer-events:none;z-index:1}
-  .map-note span{color:#58645b}
+  .map-shell{position:relative;width:100%;flex:1;min-height:min(680px,calc(100vh - 126px));overflow:hidden;background:#e8ebe4}
+  .map{height:100%;min-height:min(680px,calc(100vh - 126px));width:100%}
+  @media(max-width:760px){
+    .map-shell,.map{min-height: min(52vh,470px)}
+  }
 </style>
