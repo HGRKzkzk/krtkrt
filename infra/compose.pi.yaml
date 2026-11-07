@@ -1,0 +1,7 @@
+# Pi pilot: no direct PocketBase ports; web also remains localhost-only.
+# Use a separately configured secure tunnel for future external access.
+services:
+  web:
+    restart: unless-stopped
+  backend:
+    restart: unless-stopped
