@@ -64,3 +64,11 @@ Een echte multi-user implementatie vergt aparte autorisatie voor de zichtbaarhei
 - De eigen deelnemer wordt alleen meegeteld als diens postcodegebied is gekozen én zichtbaar is gemaakt. Staat die deelnemer in hetzelfde gebied als anderen, dan ontstaat géén tweede, overlappende pin.
 - Vier fictieve personen in PC4 5041 dienen als proefinhoud, met eigen introducties. Deze personen zijn geen accounts en hun profielen staan vast in de code; zij zijn expliciet herkenbaar als voorbeelden.
 - De huidige demo heeft geen echte toegangscontrole. Voor een toekomstige gedeelde dienst mogen uitsluitend server-side toegestane, vrijwillig zichtbare profielen in telling en lijsten voorkomen. Bij zeer kleine groepen moet opnieuw worden afgewogen of aantalweergave privacyrisico's oplevert.
+
+## Mijn plek — schrijf eerst, stel pas daarna in
+- De profielbewerking start met de zelfgekozen naam en **directe rich-text-invoer** voor het persoonlijke verhaal. Basale opmaak: vet, cursief, onderstrepen, kopjes, lijsten en HTTPS-links. Wat je ziet in de editor benadert de uiteindelijke pagina.
+- Vrije wijknaam en PC4-keuze waren dubbelop. Alleen het vrijwillig gekozen postcodegebied is nog publiek weergegeven. Bestaande vrije wijktekst blijft intern als legacyveld bestaan, maar wordt niet meer als tweede locatie getoond.
+- Locatie, extra verhalen/foto's/verwijzingen en contactvoorkeuren zijn uitklapbaar, geen verplichte onboardingstappen.
+- Achtergrond- en lettertypepresets zijn uit de zichtbare bewerkingsinterface gehaald; nadruk ligt nu op het opmaken van eigen tekst, niet op het kiezen uit drie sjablonen.
+- De browserdemo gebruikt een compacte contenteditable-editor met een strikte HTML-toegestane-lijst. Scripts, formulieren, iframes, inline styles, afbeeldingen uit geplakte HTML en onveilige URL's worden niet als profiel-HTML overgenomen. Links accepteren alleen HTTPS. Geplakte inhoud wordt als platte tekst ingevoerd.
+- Het bestaande blokmodel blijft behouden; oude tekst wordt in de nieuwe editor als platte tekst voorbereid en pas bij verandering als rich HTML opgeslagen. Er zijn nog geen serveropslag en geen productiegaranties; een volwassen editor zoals Tiptap verdient aanbeveling vóór een publieke pilot.

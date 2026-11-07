@@ -2,6 +2,8 @@
   import type { PersonalPlace, ProfileBlock, ProfileLink, Theme, Typeface, ContactMode, BlockKind } from '$lib/personalPlace';
   import { blankBlock, validExternalUrl, linkSite } from '$lib/personalPlace';
   import AreaPicker from '$lib/AreaPicker.svelte';
+  import RichTextEditor from '$lib/RichTextEditor.svelte';
+  import { sanitizeRich, richHasText } from '$lib/richText';
 
   export let place: PersonalPlace;
   export let person: string;
@@ -10,8 +12,9 @@
   export let onChange: (next: PersonalPlace) => void = () => {};
   export let onNameChange: (name: string) => void = () => {};
   let imageError = '';
-  $: intro = place.blocks.find((block) => block.kind === 'text' && block.text.trim());
-  $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && block.text.trim()) || (block.kind === 'image' && block.image)));
+  $: firstText = place.blocks.find((block) => block.kind === 'text');
+  $: intro = place.blocks.find((block) => block.kind === 'text' && (block.text.trim() || richHasText(block.richText || '')));
+  $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && (block.text.trim() || richHasText(block.richText || ''))) || (block.kind === 'image' && block.image)));
   $: allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)));
 
 
@@ -58,14 +61,18 @@
     <header class="canvas-head">
       <h2>{person || 'Mijn plek'}</h2>
       {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
-      {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
     </header>
-    {#if intro}<div class="introduction">{intro.text}</div>{/if}
+    {#if intro}
+      <div class="introduction">
+        {#if intro.richText}{@html sanitizeRich(intro.richText)}{:else}{intro.text}{/if}
+      </div>
+    {/if}
     {#if stories.length}
       <section class="stories">
         <h3>Wat ik verder zoal doe</h3>
         {#each stories as item (item.id)}
-          {#if item.kind === 'text'}<p class="authored-text">{item.text}</p>
+          {#if item.kind === 'text'}
+            <div class="authored-text">{#if item.richText}{@html sanitizeRich(item.richText)}{:else}{item.text}{/if}</div>
           {:else}<figure><img src={item.image} alt={item.alt || 'Afbeelding op de persoonlijke plek'} />{#if item.text.trim()}<figcaption>{item.text}</figcaption>{/if}</figure>{/if}
         {/each}
       </section>
@@ -109,35 +116,47 @@
   {#if owner && editing}
     <div class="studio" aria-label="Richt mijn plek in">
       <div class="studio-header"><h3>Vertel iets over jezelf</h3><p>De pagina heeft een vaste opbouw. Jij bepaalt de inhoud en hoeveel je laat zien.</p></div>
-      <div class="settings">
-        <div class="setting"><label for="person-name">Naam</label><input id="person-name" maxlength="40" value={person} oninput={(e) => onNameChange(e.currentTarget.value)} /></div>
-        <div class="setting"><label for="profile-theme">Achtergrond</label><select id="profile-theme" value={place.theme} onchange={(e) => change({ theme: e.currentTarget.value as Theme })}><option value="papier">Papier</option><option value="ink">Donker</option><option value="kleur">Warm</option></select></div>
-        <div class="setting"><label for="profile-font">Letters</label><select id="profile-font" value={place.typeface} onchange={(e) => change({ typeface: e.currentTarget.value as Typeface })}><option value="sans">Eenvoudig</option><option value="serif">Boekachtig</option><option value="mono">Typemachine</option></select></div>
+      <div class="intro-editor">
+        <div class="setting">
+          <label for="person-name">Hoe wil je genoemd worden?</label>
+          <input id="person-name" maxlength="40" value={person} oninput={(e) => onNameChange(e.currentTarget.value)} />
+        </div>
+        <h4>Jouw verhaal</h4>
+        <p>Dit is de eerste tekst die iemand op je persoonlijke pagina leest.</p>
+        {#if firstText}
+          <RichTextEditor value={firstText.richText || ''} fallbackText={firstText.text}
+            onChange={(richText) => updateBlock(firstText.id, {richText, text: ''})}/>
+        {:else}
+          <button class="start-writing" onclick={() => addBlock('text')}>+ Begin met schrijven</button>
+        {/if}
       </div>
-      <div class="setting area-setting">
-        <label for="profile-area">Buurt, wijk of stad (mag leeg)</label>
-        <input id="profile-area" maxlength="80" value={place.area} placeholder="Bijvoorbeeld: Korvel, Tilburg" oninput={(e) => change({ area: e.currentTarget.value })}/>
-        <label class="check"><input type="checkbox" checked={place.areaVisible} onchange={(e) => change({ areaVisible: e.currentTarget.checked })}/> Toon deze aanduiding op mijn plek</label>
-        <small>Dit is wat je zelf wilt delen, niet je woonadres. Er wordt nooit een exact adres opgeslagen.</small>
-        <label>Mijn postcodegebied (optioneel)</label>
-        <AreaPicker area={place.mapArea} onChange={(mapArea) => change({ mapArea })}/>
-        <small>Bij zichtbaarheid verschijnt dit postcodegebied als vlak op de kaart, niet als woonpunt.</small>
-      </div>
+      <details class="extra-section">
+        <summary>Mijn plek op de kaart</summary>
+        <div class="extra-content">
+          <label class="check"><input type="checkbox" checked={place.areaVisible} onchange={(e) => change({ areaVisible: e.currentTarget.checked })}/> Toon mijn postcodegebied op de kaart</label>
+          <AreaPicker area={place.mapArea} onChange={(mapArea) => change({ mapArea })}/>
+          <small>Dit gebied is vrijwillig. Je kunt ook zonder locatie een volledige persoonlijke pagina maken. Er wordt geen huisadres gedeeld.</small>
+        </div>
+      </details>
 
-      <div class="pieces-editor">
-        <h4>Verhalen, beelden en vindplaatsen</h4>
-        {#each place.blocks as block, i (block.id)}
+      <details class="extra-section">
+        <summary>Foto's, extra verhalen en links toevoegen</summary>
+        <div class="pieces-editor">
+          <p class="section-explainer">Je kunt later altijd iets toevoegen. Ook een pagina met alleen een naam of verhaal is prima.</p>
+        {#each place.blocks.filter((block) => block.id !== firstText?.id) as block, i (block.id)}
           <div class="block-editor">
             <div class="block-top"><strong>{block.kind === 'text' ? 'Tekst' : block.kind === 'image' ? 'Afbeelding' : 'Links'}</strong>
               <div class="block-controls">
-                <button disabled={i === 0} onclick={() => move(block.id, -1)} aria-label="Verplaats onderdeel omhoog">↑</button>
-                <button disabled={i === place.blocks.length - 1} onclick={() => move(block.id, 1)} aria-label="Verplaats onderdeel omlaag">↓</button>
+                <button disabled={place.blocks.findIndex((b) => b.id === block.id) <= 1} onclick={() => move(block.id, -1)} aria-label="Verplaats onderdeel omhoog">↑</button>
+                <button disabled={place.blocks.findIndex((b) => b.id === block.id) === place.blocks.length - 1} onclick={() => move(block.id, 1)} aria-label="Verplaats onderdeel omlaag">↓</button>
                 <button onclick={() => removeBlock(block.id)} aria-label="Verwijder onderdeel">Verwijder</button>
               </div>
             </div>
             {#if block.kind === 'text'}
               <label for={'body-'+block.id}>Jouw tekst</label>
-              <textarea id={'body-'+block.id} rows="5" maxlength="2500" value={block.text} placeholder="Een verhaal, gedachte, grap of iets anders…" oninput={(e) => updateBlock(block.id, { text: e.currentTarget.value })}></textarea>
+              <RichTextEditor value={block.richText || ''} fallbackText={block.text}
+                placeholder="Nog iets vertellen?"
+                onChange={(richText) => updateBlock(block.id, {richText,text:''})}/>
             {:else if block.kind === 'image'}
               <label for={'photo-'+block.id}>Kies een afbeelding van je apparaat</label>
               <input id={'photo-'+block.id} type="file" accept="image/png,image/jpeg,image/webp" onchange={(e) => uploadImage(block, e)} />
@@ -168,12 +187,15 @@
           </div>
         {/each}
         <div class="add-block">
-          <button onclick={() => addBlock('text')}>+ Tekst</button>
+          <button onclick={() => addBlock('text')}>+ Extra verhaal</button>
           <button onclick={() => addBlock('image')}>+ Afbeelding</button>
           <button onclick={() => addBlock('links')}>+ Links</button>
         </div>
-      </div>
-      <div class="contact-settings">
+        </div>
+      </details>
+      <details class="extra-section">
+        <summary>Hoe kan iemand me bereiken?</summary>
+        <div class="contact-settings">
         <label for="contact-mode">Hoe wil je benaderd worden?</label>
         <select id="contact-mode" value={place.contactMode} onchange={(e) => change({ contactMode: e.currentTarget.value as ContactMode })}>
           <option value="none">Liever geen direct contact via mijn profiel</option>
@@ -184,8 +206,9 @@
           <label for="contact-note">Vertel hoe (optioneel)</label>
           <textarea id="contact-note" maxlength="280" rows="2" placeholder={place.contactMode === 'elsewhere' ? 'Je vindt mij vooral op Instagram…' : 'Spreek me gerust aan bij de schilderles.'} value={place.contactNote} oninput={(e) => change({ contactNote: e.currentTarget.value })}></textarea>
         {/if}
-        <small>Geen interne berichtplicht en geen automatische deelknop voor je woonadres.</small>
-      </div>
+        <small>Je hoeft geen contactkanaal op te geven. Ontmoetingen mogen ook buiten krtkrt ontstaan.</small>
+        </div>
+      </details>
     </div>
   {/if}
 </div>
@@ -221,6 +244,14 @@
   .studio{border-top:1px solid #d9ded8;margin-top:28px;padding-top:25px}
   .studio-header h3{font-weight:500;font-size:20px;margin:0}
   .studio-header p{font-size:13px;color:#6d756d;margin:4px 0 24px}
+  .intro-editor{max-width:700px;margin:12px 0 28px}
+  .intro-editor h4{font-size:18px;font-weight:600;margin:24px 0 3px}
+  .intro-editor p,.section-explainer{font-size:13px;color:#68736a;margin:3px 0 12px}
+  .start-writing{border:1px dashed #75947b;background:#f2f6ef;padding:18px;width:100%;text-align:left;color:#2c5636;font-size:16px;cursor:pointer}
+  .extra-section{border-top:1px solid #dce2d9;padding:12px 0}
+  .extra-section summary{cursor:pointer;font-size:15px;font-weight:600;color:#344e3b;padding:8px 0}
+  .extra-section summary:hover{text-decoration:underline}
+  .extra-content{max-width:680px;display:flex;flex-direction:column;gap:12px;padding:14px 0 20px}
   .settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .setting{display:flex;flex-direction:column;gap:6px}
   .area-setting{margin-top:18px;max-width:600px}
@@ -230,7 +261,7 @@
   input,select,textarea{width:100%;border:1px solid #c6cec6;border-radius:2px;padding:9px;background:#fff;color:#252b25;font:inherit}
   input[type=file]{font-size:12px}
   small{font-size:11px;color:#697169}
-  .pieces-editor{margin-top:30px}
+  .pieces-editor{margin-top:10px}
   .pieces-editor h4{font-size:16px;font-weight:500}
   .block-editor{padding:16px 0;border-top:1px solid #dce1da;display:flex;flex-direction:column;gap:7px}
   .block-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px}
@@ -244,4 +275,11 @@
   .contact-settings{border-top:1px solid #dce1da;padding-top:18px;display:flex;flex-direction:column;gap:8px;max-width:600px}
   .error{color:#9d4229;font-size:12px}
   @media(max-width:600px){.settings{grid-template-columns:1fr}.canvas{min-height:180px}.block-top{align-items:flex-start}.block-controls{gap:5px}}
+
+
+  .introduction :global(p),.authored-text :global(p){margin:0 0 12px}
+  .introduction :global(h3),.authored-text :global(h3){font-family:inherit;font-size:1.25em;line-height:1.3;margin:18px 0 9px}
+  .introduction :global(ul),.introduction :global(ol),.authored-text :global(ul),.authored-text :global(ol){padding-left:24px}
+  .introduction :global(a),.authored-text :global(a){overflow-wrap:anywhere}
+
 </style>
