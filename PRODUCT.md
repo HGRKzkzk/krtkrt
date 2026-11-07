@@ -51,3 +51,8 @@ Voor een echte proef met mensen eerst: identiteit en toegang, autorisatie, conte
 ## Wijzigingsdiscipline
 
 Dit document bevat de huidige normatieve keuzes. Gedane experimenten en vervallen richtingen gaan naar [docs/ontwerpgeschiedenis.md](docs/ontwerpgeschiedenis.md), niet als tegenstrijdige paragrafen achteraan dit bestand. Bij veranderingen aan zichtbaar productgedrag worden **README.md** en dit document opnieuw beoordeeld; bij technische wijzigingen **ARCHITECTURE.md**. De PR-template en CI-check maken die beoordeling verplicht.
+
+## Foto en geografische aanduiding
+Een persoonlijke foto is volledig vrijwillig; een standaardavatar met initialen is gelijkwaardig. Dezelfde zelfgekozen afbeelding kan terugkomen als compact herkenningspunt in het groepspaneel en bij bijdragen. Fotokeuze is geen profielvolledigheidseis.
+
+PC4 blijft de geografische sleutel. In de presentatie gaat een begrijpelijke plaats-/gebiedsnaam vóór een kaal postcodegetal, **mits de bron eenduidig is**. Een PC4-gebied kan verschillende wijken overlappen; presenteer geen afgeleide plaatsnaam als gegarandeerd wijklabel. Bij onzekerheid: `Gebied [PC4]`.

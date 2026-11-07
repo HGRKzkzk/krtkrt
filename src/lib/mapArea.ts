@@ -48,3 +48,26 @@ export function postcodeGeometry(pc4: string): Promise<GeoFeatureCollection> {
   task.catch(() => { if (cache.get(pc4) === task) cache.delete(pc4); });
   return task;
 }
+
+// A PC4 polygon can overlap several municipal neighbourhoods. Therefore show
+// a place/area label, never assert that a PC4 is a single official 'wijk'.
+const placeCache = new Map<string, Promise<string>>();
+export function displayAreaName(pc4: string): Promise<string> {
+  if (!validPc4(pc4)) return Promise.resolve('Onbekend gebied');
+  const cached = placeCache.get(pc4);
+  if (cached) return cached;
+  const params = new URLSearchParams({ q: pc4, rows: '15', fq: 'type:postcode' });
+  const task = fetch('https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?' + params, {mode:'cors'})
+    .then(async (response) => {
+      if (!response.ok) throw new Error('PDOK niet beschikbaar');
+      const data: unknown = await response.json();
+      const docs = (data as {response?: {docs?: Array<{postcode?:string;woonplaatsnaam?:string}>}})?.response?.docs;
+      if (!Array.isArray(docs)) throw new Error('Onleesbare gebiedsnaam');
+      // Never use a nearby postcode search result as proof of a place name.
+      const places = [...new Set(docs.filter((d) => d.postcode?.replace(/\s/g,'').startsWith(pc4))
+        .map((d) => d.woonplaatsnaam?.trim()).filter((v):v is string=>!!v))];
+      return places.length === 1 ? places[0] + ' · gebied ' + pc4 : 'Gebied ' + pc4;
+    }).catch(() => 'Gebied ' + pc4);
+  placeCache.set(pc4,task);
+  return task;
+}

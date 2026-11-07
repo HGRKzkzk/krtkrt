@@ -20,6 +20,7 @@ export type PersonalPlace = {
   area: string;
   mapArea: MapArea | null;
   areaVisible: boolean;
+  avatar?: string;
   contactMode: ContactMode;
   contactNote: string;
   blocks: ProfileBlock[];
@@ -36,7 +37,7 @@ export const blankBlock = (kind: BlockKind): ProfileBlock => ({
 });
 
 export function emptyPlace(): PersonalPlace {
-  return { theme: 'papier', typeface: 'sans', area: '', mapArea: null, areaVisible: false, contactMode: 'none', contactNote: '', blocks: [] };
+  return { theme: 'papier', typeface: 'sans', area: '', mapArea: null, areaVisible: false, avatar: '', contactMode: 'none', contactNote: '', blocks: [] };
 }
 
 export function validExternalUrl(value: string): boolean {
@@ -85,6 +86,7 @@ export function cleanPlace(raw: unknown): PersonalPlace {
     area: String(x.area || '').slice(0, 80),
     mapArea: cleanMapArea(x.mapArea),
     areaVisible: x.areaVisible === true,
+    avatar: typeof x.avatar === 'string' && /^data:image\/jpeg;base64,/.test(x.avatar) && x.avatar.length < 130000 ? x.avatar : '',
     contactMode: contacts.includes(x.contactMode as ContactMode) ? x.contactMode as ContactMode : 'none',
     contactNote: String(x.contactNote || '').slice(0, 280),
     blocks

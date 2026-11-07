@@ -3,6 +3,8 @@
   import { blankBlock, validExternalUrl, linkSite } from '$lib/personalPlace';
   import AreaPicker from '$lib/AreaPicker.svelte';
   import RichTextEditor from '$lib/RichTextEditor.svelte';
+  import Avatar from '$lib/Avatar.svelte';
+  import { displayAreaName } from '$lib/mapArea';
   import { sanitizeRich, richHasText } from '$lib/richText';
 
   export let place: PersonalPlace;
@@ -12,6 +14,42 @@
   export let onChange: (next: PersonalPlace) => void = () => {};
   export let onNameChange: (name: string) => void = () => {};
   let imageError = '';
+  let avatarError = '';
+  let areaLabel = '';
+  let lastLabelPc4 = '';
+  $: if (place.mapArea?.pc4 !== lastLabelPc4) {
+    lastLabelPc4 = place.mapArea?.pc4 || '';
+    const code = lastLabelPc4;
+    areaLabel = code ? 'Gebied ' + code : '';
+    if (code) void displayAreaName(code).then((label) => { if (lastLabelPc4 === code) areaLabel = label; });
+  }
+  async function uploadAvatar(event: Event) {
+    avatarError = '';
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5_000_000) {
+      avatarError = 'Kies een JPG, PNG of WebP van maximaal 5 MB.';
+      input.value = '';
+      return;
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = 160; canvas.height = 160;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Geen afbeeldingscontext');
+      const edge = Math.min(bitmap.width,bitmap.height);
+      context.drawImage(bitmap,(bitmap.width-edge)/2,(bitmap.height-edge)/2,edge,edge,0,0,160,160);
+      bitmap.close();
+      const data = canvas.toDataURL('image/jpeg',.75);
+      if (data.length > 130000) throw new Error('Te groot');
+      change({avatar:data});
+    } catch {
+      avatarError = 'De foto kon niet verwerkt worden. Kies een andere afbeelding.';
+    }
+    input.value = '';
+  }
   $: firstText = place.blocks.find((block) => block.kind === 'text');
   $: intro = place.blocks.find((block) => block.kind === 'text' && (block.text.trim() || richHasText(block.richText || '')));
   $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && (block.text.trim() || richHasText(block.richText || ''))) || (block.kind === 'image' && block.image)));
@@ -59,8 +97,14 @@
 <div class="personal-place">
   <section class:ink={place.theme === 'ink'} class:colour={place.theme === 'kleur'} class:serif={place.typeface === 'serif'} class:mono={place.typeface === 'mono'} class="canvas">
     <header class="canvas-head">
-      <h2>{person || 'Mijn plek'}</h2>
-      {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
+      <div class="profile-identity">
+        <Avatar name={person} image={place.avatar || ''} size="large"/>
+        <div>
+          <h2>{person || 'Mijn plek'}</h2>
+          {#if place.areaVisible && place.mapArea}<span class="location">{areaLabel}</span>{/if}
+        </div>
+      </div>
+
     </header>
     {#if intro}
       <div class="introduction">
@@ -120,6 +164,16 @@
         <div class="setting">
           <label for="person-name">Hoe wil je genoemd worden?</label>
           <input id="person-name" maxlength="40" value={person} oninput={(e) => onNameChange(e.currentTarget.value)} />
+        </div>
+        <div class="portrait-edit">
+          <Avatar name={person} image={place.avatar || ''} size="large"/>
+          <div class="portrait-actions">
+            <label for="profile-avatar">Profielfoto (optioneel)</label>
+            <input id="profile-avatar" type="file" accept="image/jpeg,image/png,image/webp" onchange={uploadAvatar} />
+            <small>De foto wordt vierkant uitgesneden en verkleind. Je kunt haar later vervangen.</small>
+            {#if place.avatar}<button type="button" class="quiet" onclick={() => change({avatar:''})}>Profielfoto verwijderen</button>{/if}
+            {#if avatarError}<span class="error" role="alert">{avatarError}</span>{/if}
+          </div>
         </div>
         <h4>Jouw verhaal</h4>
         <p>Dit is de eerste tekst die iemand op je persoonlijke pagina leest.</p>
@@ -220,6 +274,10 @@
   .canvas.serif{font-family:Georgia,'Times New Roman',serif}
   .canvas.mono{font-family:'Courier New',monospace}
   .canvas-head{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-bottom:28px}
+  .profile-identity{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .portrait-edit{display:flex;align-items:center;gap:20px;margin:22px 0;flex-wrap:wrap}
+  .portrait-actions{display:flex;flex-direction:column;gap:7px;flex:1;min-width:190px}
+  .portrait-actions input{max-width:360px}
   .canvas h2{font-family:inherit;font-size:clamp(27px,4vw,43px);letter-spacing:-.8px;line-height:1.13;font-weight:600;margin:0}
   .location{font-size:13px;opacity:.75}
   .introduction{font-size:clamp(17px,2.2vw,20px);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-width:690px;margin:0 0 28px}
