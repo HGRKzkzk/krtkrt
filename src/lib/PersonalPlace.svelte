@@ -275,10 +275,11 @@
   .contact-settings{border-top:1px solid #dce1da;padding-top:18px;display:flex;flex-direction:column;gap:8px;max-width:600px}
   .error{color:#9d4229;font-size:12px}
   @media(max-width:600px){.settings{grid-template-columns:1fr}.canvas{min-height:180px}.block-top{align-items:flex-start}.block-controls{gap:5px}}
-</style>
-<style>
+
+
   .introduction :global(p),.authored-text :global(p){margin:0 0 12px}
   .introduction :global(h3),.authored-text :global(h3){font-family:inherit;font-size:1.25em;line-height:1.3;margin:18px 0 9px}
   .introduction :global(ul),.introduction :global(ol),.authored-text :global(ul),.authored-text :global(ol){padding-left:24px}
   .introduction :global(a),.authored-text :global(a){overflow-wrap:anywhere}
+
 </style>
