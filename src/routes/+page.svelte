@@ -98,11 +98,13 @@
     activeCircleId = id;
     channel = 'algemeen';
     showCircleMap = false;
+    showComposer = false;
     tab = 'kringen';
   }
   function circlesOverview() {
     activeCircleId = null;
     showCircleMap = false;
+    showComposer = false;
     tab = 'kringen';
   }
   function openPostCircle(circleName: string) {
@@ -112,9 +114,11 @@
   }
   function addPost() {
     if (!postText.trim()) return;
+    const inCircle = tab === 'kringen' && activeCircle;
     const post: Post = {
       id: crypto.randomUUID(), author: screenName.trim() || 'Gast', kind: postKind,
-      text: postText.trim(), visibility: postVisibility, circle: 'Schildergroep', createdAt: Date.now()
+      text: postText.trim(), visibility: inCircle ? 'kring' : 'buurt',
+      circle: inCircle ? activeCircle.name : '', createdAt: Date.now()
     };
     posts = [post, ...posts];
     selectedPostId = post.id;
@@ -200,8 +204,7 @@
             </select>
             <label for="post-text">Bericht</label>
             <textarea id="post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat speelt er?"></textarea>
-            <label for="post-visibility">Bereik</label>
-            <select id="post-visibility" bind:value={postVisibility}><option value="kring">Schildergroep</option><option value="buurt">Buurt</option></select>
+            <small>Deze bijdrage wordt in de buurt-demo getoond. Voor een bijdrage aan een kring ga je naar die kring.</small>
             <button class="solid-button" type="submit">Plaatsen</button>
           </form>
         {/if}
@@ -270,7 +273,17 @@
           </section>
         {:else}
           <section class="circle-posts" aria-label="Bijdragen uit deze kring">
-            <h2>Wat er in deze kring speelt</h2>
+            <div class="circle-post-head"><h2>Wat er in deze kring speelt</h2><button class="action-link" onclick={() => showComposer = !showComposer}>{showComposer ? 'Sluiten' : '+ Bijdrage'}</button></div>
+            {#if showComposer}
+              <form class="circle-compose" onsubmit={(event) => {event.preventDefault(); addPost();}}>
+                <label for="circle-post-kind">Soort bijdrage</label>
+                <select id="circle-post-kind" bind:value={postKind}><option value="vraag">Vraag</option><option value="aanbod">Aanbod</option><option value="gedachte">Gedachte</option></select>
+                <label for="circle-post-text">Bericht</label>
+                <textarea id="circle-post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat wil je delen met deze kring?"></textarea>
+                <small>Alleen zichtbaar in deze fictieve kringweergave; geen echte toegangsrechten.</small>
+                <button type="submit" class="solid-button">Plaatsen (demo)</button>
+              </form>
+            {/if}
             {#if circlePosts.length === 0}<p class="muted">Nog geen bijdragen in deze kring.</p>{/if}
             {#each circlePosts as post (post.id)}
               <article class="circle-post">
@@ -441,6 +454,9 @@
   .circle-navigation button{background:transparent;border:0;border-bottom:2px solid transparent;color:#536357;padding:10px 2px}
   .circle-navigation button.chosen{color:#263d2d;border-bottom-color:#263d2d;font-weight:600}
   .circle-posts{margin:25px 0 35px;max-width:720px}
+  .circle-post-head{display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .circle-post-head h2{margin:0}
+  .circle-compose{display:grid;gap:8px;padding:18px 0}
   .circle-post{border-bottom:1px solid #e1e6df;padding:12px 0}
   .circle-post p{margin:4px 0 7px}
   .circle-post .author{font-size:12px}
