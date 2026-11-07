@@ -49,3 +49,8 @@ Voor echte deelnemers zijn server-side authenticatie, autorisatie, moderatie, pr
 Voor een functionele wijziging moeten de relevante documenten in dezelfde PR worden bijgewerkt, of moet een beheerder expliciet vastleggen waarom dat niet nodig is. De CI controleert dit. Zo voorkomen we dat de README opnieuw achterblijft.
 
 > De repository is openbaar. Commit geen persoonsgegevens van echte proefdeelnemers, adressen, tokens of geheime sleutels.
+
+### Profielfoto en gebiedsnaam
+Bij **Mijn plek** kun je optioneel een profielfoto kiezen, direct onder je naam. De browser maakt daarvan een kleine vierkante JPEG die lokaal wordt bewaard en als thumbnail terugkomt in de postcodepersonenlijst en bij bijdragen. Zonder foto gebruikt krtkrt initialen; een foto is geen voorwaarde om mee te doen. De foto wordt niet naar een server geüpload.
+
+De interface probeert bij een PC4-gebied een herkenbare **plaats-/gebiedsnaam** te tonen met gegevens van de PDOK Locatieserver. Als de naam niet betrouwbaar kan worden vastgesteld, blijft `Gebied 5041` (of de gekozen andere PC4) zichtbaar. Een PC4 is niet één-op-één een officiële wijk.
