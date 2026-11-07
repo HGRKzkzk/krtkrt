@@ -9,6 +9,7 @@ export type ProfileBlock = {
   id: string;
   kind: BlockKind;
   text: string;
+  richText?: string;
   image: string;
   alt: string;
   links: ProfileLink[];
@@ -68,6 +69,7 @@ export function cleanPlace(raw: unknown): PersonalPlace {
     .map((b) => ({
       id: String(b.id || crypto.randomUUID()), kind: b.kind,
       text: String(b.text || '').slice(0, 2500),
+      richText: typeof b.richText === 'string' ? b.richText.slice(0, 30000) : '',
       image: typeof b.image === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(b.image) && b.image.length < 600000 ? b.image : '',
       alt: String(b.alt || '').slice(0, 180),
       links: Array.isArray(b.links) ? b.links.slice(0, 10).filter((l) => l && typeof l === 'object').map((l) => ({
