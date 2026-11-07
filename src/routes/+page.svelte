@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import MapView from '$lib/MapView.svelte';
   import PersonalPlaceView from '$lib/PersonalPlace.svelte';
+  import Avatar from '$lib/Avatar.svelte';
   import { demoNeighbours, demoNeighbourPlace } from '$lib/demoNeighbours';
   import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
   import type { PersonalPlace } from '$lib/personalPlace';
@@ -157,6 +158,7 @@
         <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id}
           ownArea={personalPlace.areaVisible ? personalPlace.mapArea : null}
           ownName={screenName}
+          ownAvatar={personalPlace.avatar || ''}
           neighbours={demoNeighbours}
           onPerson={openPerson}
           onOwnProfile={() => {selectedPerson = null; tab = 'profiel'; editingProfile = false;}} />
@@ -189,7 +191,7 @@
               </button>
               {#if selectedPostId === post.id}
                 <div class="post-actions">
-                  <button onclick={() => openPerson(post.author)}>{post.author}</button>
+                  <button class="author-with-avatar" onclick={() => openPerson(post.author)}><Avatar name={post.author} image={post.author === screenName ? (personalPlace.avatar || '') : ''}/>{post.author}</button>
                   <button onclick={openCircle}>Schildergroep</button>
                   {#if !post.demo}<button onclick={() => removePost(post.id)}>Verwijder</button>{/if}
                 </div>
@@ -248,7 +250,7 @@
         <h2>Bijdragen</h2>
         {#if profilePosts.length === 0 && profileNotes.length === 0}<p class="muted">Nog geen bijdragen.</p>{/if}
         {#each profilePosts as post (post.id)}
-          <div class="contribution"><span class="post-meta">{post.kind} · {when(post.createdAt)}</span><p>{post.text}</p><button class="action-link" onclick={() => {selectedPostId = post.id; tab = 'kaart';}}>Op de kaart</button></div>
+          <div class="contribution"><div class="contribution-author"><Avatar name={profileName} image={selectedPerson ? shownProfile.avatar || '' : personalPlace.avatar || ''}/><span class="post-meta">{post.kind} · {when(post.createdAt)}</span></div><p>{post.text}</p><button class="action-link" onclick={() => {selectedPostId = post.id; tab = 'kaart';}}>Op de kaart</button></div>
         {/each}
         {#each profileNotes as note (note.id)}
           <div class="contribution"><span class="post-meta">Eerdere notitie</span><p>{note.reason}</p></div>
@@ -325,6 +327,8 @@
   .profile-field p{white-space:pre-wrap;overflow-wrap:anywhere}
   .outbound{overflow-wrap:anywhere}
   .profile-form{padding:0 0 30px;border:0;max-width:620px}
+  .author-with-avatar{display:inline-flex;gap:7px;align-items:center}
+  .contribution-author{display:flex;align-items:center;gap:10px}
   .contributions{margin-top:44px;border-top:1px solid #dfe3dd;padding-top:20px}
   .contributions>h2{font-size:17px;margin-bottom:15px}
   .contribution{padding:15px 0;border-bottom:1px solid #e6e8e4}
