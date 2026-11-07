@@ -56,7 +56,7 @@
 <div class="personal-place">
   <section class:ink={place.theme === 'ink'} class:colour={place.theme === 'kleur'} class:serif={place.typeface === 'serif'} class:mono={place.typeface === 'mono'} class="canvas">
     <header class="canvas-head">
-      <h2>Hoera! {person || 'Iemand'} bestaat.</h2>
+      <h2>{person || 'Mijn plek'}</h2>
       {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
       {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
     </header>
