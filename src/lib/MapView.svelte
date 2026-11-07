@@ -8,6 +8,9 @@
   import VectorSource from 'ol/source/Vector.js';
   import Feature from 'ol/Feature.js';
   import Point from 'ol/geom/Point.js';
+  import Circle from 'ol/geom/Circle.js';
+  import { AREA_RADIUS_METERS } from './mapArea';
+  import type { MapArea } from './mapArea';
   import { fromLonLat } from 'ol/proj.js';
   import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style.js';
   import type { Post } from './types';
@@ -16,6 +19,8 @@
   export let posts: Post[] = [];
   export let selectedId: string | null = null;
   export let onSelect: (id: string) => void = () => {};
+  export let ownArea: MapArea | null = null;
+  export let onOwnProfile: () => void = () => {};
 
   let target: HTMLDivElement;
   let map: Map;
@@ -27,6 +32,12 @@
   ];
   function renderMarkers(){
     vectorSource.clear();
+    if (ownArea) {
+      const center = fromLonLat([ownArea.lon, ownArea.lat]);
+      const region = new Feature({ geometry: new Circle(center, AREA_RADIUS_METERS) });
+      region.setStyle(new Style({ fill: new Fill({ color: 'rgba(175,98,55,.17)' }), stroke: new Stroke({ color: '#a55e3c', width: 2, lineDash: [6,5] }) }));
+      vectorSource.addFeature(region);
+    }
     posts.forEach((post,index)=>{
       const coordinate = areaPoints[index % areaPoints.length];
       const feature = new Feature({geometry:new Point(fromLonLat(coordinate)), postId:post.id});
@@ -41,6 +52,14 @@
       }));
       vectorSource.addFeature(feature);
     });
+    if (ownArea) {
+      const feature = new Feature({geometry: new Point(fromLonLat([ownArea.lon,ownArea.lat])), ownProfile: true});
+      feature.setStyle(new Style({
+        image: new CircleStyle({ radius: 21, fill: new Fill({color: '#a55e3c'}), stroke: new Stroke({color:'#fff', width:4}) }),
+        text: new Text({text: 'IK', font:'bold 12px sans-serif', fill: new Fill({color:'#fff'})})
+      }));
+      vectorSource.addFeature(feature);
+    }
   }
   onMount(()=>{
     const vectorLayer=new VectorLayer({source:vectorSource});
@@ -51,17 +70,18 @@
     });
     map.on('singleclick',event=>{
       const feature=map.forEachFeatureAtPixel(event.pixel,f=>f);
+      if (feature?.get('ownProfile')) {onOwnProfile(); return;}
       const id=feature?.get('postId');
       if(typeof id==='string')onSelect(id);
     });
     renderMarkers();
     return ()=>map.setTarget(undefined);
   });
-  $: if(map && posts && selectedId !== undefined) renderMarkers();
+  $: if(map && posts && selectedId !== undefined && ownArea !== undefined) renderMarkers();
 </script>
 
 <div class="map-shell">
-  <div bind:this={target} class="map" aria-label="Interactieve kaart met fictieve gebiedsmarkers"></div>
+  <div bind:this={target} class="map" aria-label="Interactieve kaart met fictieve oproepen en je eigen globale profielgebied"></div>
   </div>
 <style>
   .map-shell{position:relative;width:100%;flex:1;min-height:min(680px,calc(100vh - 126px));overflow:hidden;background:#e8ebe4}
