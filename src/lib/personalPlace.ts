@@ -88,3 +88,23 @@ export function cleanPlace(raw: unknown): PersonalPlace {
     blocks
   };
 }
+
+export type LinkSite = { name: string; icon: string; recognized: boolean };
+export function linkSite(value: string): LinkSite {
+  if (!validExternalUrl(value)) return { name: 'Website', icon: 'web', recognized: false };
+  const host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+  const platforms: { hosts: string[]; name: string; icon: string }[] = [
+    { hosts: ['instagram.com'], name: 'Instagram', icon: 'instagram' },
+    { hosts: ['facebook.com', 'fb.com'], name: 'Facebook', icon: 'facebook' },
+    { hosts: ['bandcamp.com'], name: 'Bandcamp', icon: 'bandcamp' },
+    { hosts: ['youtube.com', 'youtu.be'], name: 'YouTube', icon: 'youtube' },
+    { hosts: ['bsky.app'], name: 'Bluesky', icon: 'bluesky' },
+    { hosts: ['mastodon.social', 'mastodon.online'], name: 'Mastodon', icon: 'mastodon' },
+    { hosts: ['tiktok.com'], name: 'TikTok', icon: 'tiktok' },
+    { hosts: ['linkedin.com'], name: 'LinkedIn', icon: 'linkedin' },
+    { hosts: ['soundcloud.com'], name: 'SoundCloud', icon: 'soundcloud' },
+    { hosts: ['open.spotify.com', 'spotify.com'], name: 'Spotify', icon: 'spotify' }
+  ];
+  const platform = platforms.find((p) => p.hosts.some((h) => host === h || host.endsWith('.' + h)));
+  return platform ? { name: platform.name, icon: platform.icon, recognized: true } : { name: host, icon: 'web', recognized: false };
+}
