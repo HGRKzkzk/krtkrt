@@ -4,140 +4,339 @@
   import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
   import type { Post, Message, Connection, Kind, Visibility } from '$lib/types';
 
-  type Tab='kaart'|'kringen'|'profiel';
-  let tab:Tab='kaart';
+  type Tab = 'kaart' | 'kringen' | 'profiel';
+  type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
+  let tab: Tab = 'kaart';
   let selectedPostId: string | null = 'p1';
   let selectedPerson: string | null = null;
-  type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
-  let myProfile: Profile = {bio:'',appreciates:'',dislikes:'',links:''};
-  const demoPeople: Record<string,{bio:string;appreciates:string;dislikes:string;links:string}> = {
-    'Noor (voorbeeld)':{bio:'Ik schilder sinds kort en ontdek graag wat er mogelijk is met beperkte middelen.',appreciates:'Kleur, wandelen, spontaan iets proberen',dislikes:'Niet alles hoeft perfect te zijn.',links:''},
-    'Sam (voorbeeld)':{bio:'Ik houd van kunst, koken en spullen die je samen kunt gebruiken.',appreciates:'Samen maken, delen, experimenteren',dislikes:'Wegwerpcultuur',links:''},
-    'Alex (voorbeeld)':{bio:'Ik maak graag dingen en help af en toe iemand met een klus.',appreciates:'Muziek, hout, schilderen',dislikes:'Onnodig ingewikkeld doen',links:''},
-    'Mika (voorbeeld)':{bio:'Ik ben benieuwd waarom iets ons raakt.',appreciates:'Gesprekken, schilderkunst, muziek',dislikes:'Smaak als wedstrijd',links:''},
-    'Voorbeeldbijdrage':{bio:'Een fictief voorbeeldprofiel met persoonlijke observaties.',appreciates:'Onverwachte verbindingen',dislikes:'Dwingende aanbevelingen',links:''}
+  let posts: Post[] = [...demoPosts];
+  let messages: Message[] = [...demoMessages];
+  // Preserve historical notes written in older demo versions; no route editor.
+  let connections: Connection[] = [...demoConnections];
+  let myProfile: Profile = { bio: '', appreciates: '', dislikes: '', links: '' };
+  let screenName = 'Gast';
+  let channel = 'algemeen';
+  let showComposer = false;
+  let editingProfile = false;
+  let postText = '';
+  let postKind: Kind = 'vraag';
+  let postVisibility: Visibility = 'kring';
+  let messageText = '';
+  let notice = '';
+  let stored = false;
+  const key = 'onder-elkaar-demo-v1';
+  const demoPeople: Record<string, Profile> = {
+    'Noor (voorbeeld)': { bio: 'Ik schilder sinds kort en ontdek graag wat er mogelijk is met beperkte middelen.', appreciates: 'Kleur, wandelen, spontaan iets proberen', dislikes: 'Niet alles hoeft perfect te zijn.', links: '' },
+    'Sam (voorbeeld)': { bio: 'Ik houd van kunst, koken en spullen die je samen kunt gebruiken.', appreciates: 'Samen maken, delen, experimenteren', dislikes: 'Wegwerpcultuur', links: '' },
+    'Alex (voorbeeld)': { bio: 'Ik maak graag dingen en help af en toe iemand met een klus.', appreciates: 'Muziek, hout, schilderen', dislikes: 'Onnodig ingewikkeld doen', links: '' },
+    'Mika (voorbeeld)': { bio: 'Ik ben benieuwd waarom iets ons raakt.', appreciates: 'Gesprekken, schilderkunst, muziek', dislikes: 'Smaak als wedstrijd', links: '' },
+    'Voorbeeldbijdrage': { bio: 'Een fictief voorbeeldprofiel met persoonlijke observaties.', appreciates: 'Onverwachte verbindingen', dislikes: 'Dwingende aanbevelingen', links: '' }
   };
-  function openPerson(name:string){selectedPerson=name===screenName?null:name;tab='profiel';}
-  function openCircle(){tab='kringen';channel='algemeen';}
-  function choosePost(id:string){selectedPostId=id;}
-  function safeLinks(raw:string){return raw.split(/\n|,/).map(x=>x.trim()).filter(x=>/^https:\/\/[^\s]+$/i.test(x)).slice(0,5);}
-  let posts:Post[] = [...demoPosts];
-  let messages:Message[] = [...demoMessages];
-  let connections:Connection[] = [...demoConnections];
-  let channel='algemeen';
-  let showComposer=false;
-  let postText=''; let postKind:Kind='vraag'; let postVisibility:Visibility='kring';
-  let messageText='';
-  let screenName='Gast';
-  let stored=false;
-  let notice='';
-  $: currentPost = posts.find(p=>p.id===selectedPostId) || null;
-  $: shownProfile = selectedPerson ? demoPeople[selectedPerson] || {bio:'Deze persoon heeft nog geen publiek demo-profiel.',appreciates:'',dislikes:'',links:''} : myProfile;
+
+  $: currentPost = posts.find((p) => p.id === selectedPostId) ?? null;
   $: profileName = selectedPerson || screenName || 'Gast';
-  const key='onder-elkaar-demo-v1';
-  onMount(()=>{
+  $: shownProfile = selectedPerson
+    ? demoPeople[selectedPerson] ?? { bio: 'Nog geen introductie.', appreciates: '', dislikes: '', links: '' }
+    : myProfile;
+  $: profilePosts = posts.filter((p) => p.author === profileName);
+  $: profileNotes = connections.filter((c) => c.author === profileName);
+
+  onMount(() => {
     try {
-      const raw=localStorage.getItem(key);
-      if(raw){const d=JSON.parse(raw); posts=Array.isArray(d.posts)?d.posts:demoPosts; messages=Array.isArray(d.messages)?d.messages:demoMessages; connections=Array.isArray(d.connections)?d.connections:demoConnections; screenName=typeof d.screenName==='string'?d.screenName:'Gast'; myProfile=d.myProfile && typeof d.myProfile==='object' ? {bio:String(d.myProfile.bio||''),appreciates:String(d.myProfile.appreciates||''),dislikes:String(d.myProfile.dislikes||''),links:String(d.myProfile.links||'')} : myProfile;}
-      stored=true;
-    }catch{notice='Lokale gegevens konden niet worden geladen.';stored=true;}
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const data = JSON.parse(raw);
+        posts = Array.isArray(data.posts) ? data.posts : [...demoPosts];
+        messages = Array.isArray(data.messages) ? data.messages : [...demoMessages];
+        connections = Array.isArray(data.connections) ? data.connections : [...demoConnections];
+        screenName = typeof data.screenName === 'string' ? data.screenName : 'Gast';
+        if (data.myProfile && typeof data.myProfile === 'object') {
+          myProfile = {
+            bio: String(data.myProfile.bio || ''),
+            appreciates: String(data.myProfile.appreciates || ''),
+            dislikes: String(data.myProfile.dislikes || ''),
+            links: String(data.myProfile.links || '')
+          };
+        }
+      }
+    } catch {
+      notice = 'De opgeslagen demo kon niet worden geladen.';
+    }
+    stored = true;
   });
-  function persist(){if(!stored)return;try{localStorage.setItem(key,JSON.stringify({posts,messages,connections,screenName,myProfile}));}catch{notice='Opslaan in deze browser lukt niet.';}}
-  function addPost(){if(!postText.trim())return; posts=[{id:crypto.randomUUID(), author:screenName.trim()||'Gast',kind:postKind,text:postText.trim(),visibility:postVisibility,circle:'Schildergroep',createdAt:Date.now()},...posts];postText='';showComposer=false;persist();}
-  function addMessage(){if(!messageText.trim())return;messages=[...messages,{id:crypto.randomUUID(),author:screenName.trim()||'Gast',channel,text:messageText.trim(),createdAt:Date.now()}];messageText='';persist();}
-  function reset(){if(!confirm('Alle eigen bijdragen in deze browser verwijderen en demo herstellen?'))return;posts=[...demoPosts];messages=[...demoMessages];connections=[...demoConnections];screenName='Gast';myProfile={bio:'',appreciates:'',dislikes:'',links:''};selectedPerson=null;selectedPostId='p1';tab='kaart';persist();}
-  function removePost(id:string){posts=posts.filter(p=>p.id!==id);persist();}
-  function when(ts:number){return new Intl.DateTimeFormat('nl-NL',{day:'numeric',month:'short'}).format(new Date(ts));}
+  function persist() {
+    if (!stored) return;
+    try {
+      localStorage.setItem(key, JSON.stringify({ posts, messages, connections, screenName, myProfile }));
+    } catch {
+      notice = 'Opslaan in deze browser lukt niet.';
+    }
+  }
+  function openPerson(name: string) {
+    selectedPerson = name === screenName ? null : name;
+    editingProfile = false;
+    tab = 'profiel';
+  }
+  function openCircle() {
+    channel = 'algemeen';
+    tab = 'kringen';
+  }
+  function addPost() {
+    if (!postText.trim()) return;
+    const post: Post = {
+      id: crypto.randomUUID(), author: screenName.trim() || 'Gast', kind: postKind,
+      text: postText.trim(), visibility: postVisibility, circle: 'Schildergroep', createdAt: Date.now()
+    };
+    posts = [post, ...posts];
+    selectedPostId = post.id;
+    postText = '';
+    showComposer = false;
+    persist();
+  }
+  function addMessage() {
+    if (!messageText.trim()) return;
+    messages = [...messages, { id: crypto.randomUUID(), author: screenName.trim() || 'Gast', channel, text: messageText.trim(), createdAt: Date.now() }];
+    messageText = '';
+    persist();
+  }
+  function removePost(id: string) {
+    posts = posts.filter((p) => p.id !== id);
+    if (selectedPostId === id) selectedPostId = posts[0]?.id ?? null;
+    persist();
+  }
+  function reset() {
+    if (!confirm('Je eigen demo-inhoud wissen en de voorbeelden herstellen?')) return;
+    posts = [...demoPosts];
+    messages = [...demoMessages];
+    connections = [...demoConnections];
+    myProfile = { bio: '', appreciates: '', dislikes: '', links: '' };
+    screenName = 'Gast';
+    selectedPerson = null;
+    selectedPostId = 'p1';
+    showComposer = false;
+    editingProfile = false;
+    tab = 'kaart';
+    notice = '';
+    persist();
+  }
+  function links(raw: string): string[] {
+    return raw.split(/\n|,/).map((s) => s.trim()).filter((s) => /^https:\/\/[^\s]+$/i.test(s)).slice(0, 5);
+  }
+  function when(timestamp: number) {
+    return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' }).format(new Date(timestamp));
+  }
 </script>
+
 <svelte:head>
-  <title>Onder elkaar — een kleine hub voor wat er speelt</title>
-  <meta name="description" content="Demo van een buurtgerichte hub met kaart, kringen, persoonlijke bijdragen en ontmoetingen." />
+  <title>krtkrt — Onder elkaar</title>
+  <meta name="description" content="Een kleine plek voor oproepen, kringen en mensen in de buurt." />
 </svelte:head>
-<div class="page">
-  <header class="topbar">
-    <div class="brand"><span class="brandmark">◎</span><div><strong>Onder elkaar</strong><small>Een plek om elkaar te vinden</small></div></div>
-    <button class="profile-top" onclick={()=>openPerson(screenName)} aria-label="Open mijn plek">◉ Mijn plek</button>
-  </header>
-  <div class="demo-warning"><strong>Lokale demo.</strong> Alle personen en bestaande berichten zijn fictief. Wat je toevoegt blijft alleen in deze browser: andere bezoekers kunnen het niet zien. Geen accounts, gedeelde chat of echte uitnodigingen.</div>
-  <main>
-    <section class="intro"><span class="eyebrow">WELKOM</span><h1>Wat speelt er bij elkaar?</h1><p>Vraag iets. Deel iets van jezelf. Maak kennis met anderen. De hub is een vertrekpunt, geen eindstation.</p></section>
-    <nav class="tabs" aria-label="Hoofdnavigatie">
-      <button class:active={tab==='kaart'} onclick={()=>tab='kaart'}>⌾ <span>Kaart</span></button>
-      <button class:active={tab==='kringen'} onclick={()=>tab='kringen'}>♧ <span>Kringen</span></button>
-      <button class:active={tab==='profiel'} onclick={()=>openPerson(screenName)}>◉ <span>Mijn plek</span></button>
+
+<div class="app">
+  <header class="masthead">
+    <button class="wordmark" onclick={() => tab = 'kaart'} aria-label="krtkrt — naar de kaart">krtkrt<span class="dot">.</span></button>
+    <nav aria-label="Hoofdnavigatie">
+      <button class:active={tab === 'kaart'} aria-current={tab === 'kaart' ? 'page' : undefined} onclick={() => tab = 'kaart'}>Kaart</button>
+      <button class:active={tab === 'kringen'} aria-current={tab === 'kringen' ? 'page' : undefined} onclick={openCircle}>Kringen</button>
+      <button class:active={tab === 'profiel'} aria-current={tab === 'profiel' ? 'page' : undefined} onclick={() => openPerson(screenName)}>Mijn plek</button>
     </nav>
-    <div class="start-here"><strong>Begin hier:</strong> bekijk een oproep op de kaart, praat in de schildergroep of vertel iets over jezelf bij <button class="inline-link" onclick={()=>openPerson(screenName)}>Mijn plek</button>.</div>
-    <div class="identity"><label for="screen-name">Naam voor deze demo</label><input id="screen-name" bind:value={screenName} onblur={persist} maxlength="40"/><span>Deze naam staat bij je bijdragen en bij je lokale profiel.</span></div>
-    {#if notice}<p role="status" class="notice">{notice}</p>{/if}
-    {#if tab==='kaart'}
-      <section class="sectionhead"><div><span class="eyebrow">IN DE OMGEVING</span><h2>Een kaart om rond te kijken</h2></div><button class="primary" onclick={()=>showComposer=!showComposer}>{showComposer?'Sluiten':'+ Oproep'}</button></section>
-      <MapView {posts} selectedId={selectedPostId} onSelect={choosePost} />
-      {#if currentPost}
-        <aside class="panel selected-post" aria-live="polite">
-          <span class="eyebrow">GEKOZEN OP DE KAART · FICTIEVE LOCATIE</span>
-          <p>{currentPost.text}</p>
-          <div class="quick-actions"><button onclick={()=>openPerson(currentPost.author)}>Over {currentPost.author}</button><button onclick={openCircle}>Naar de schilderkring</button></div>
-        </aside>
-      {/if}
-      <p class="hint">Deze demo koppelt oproepen alleen aan de regio; er worden geen woonadressen of exacte locaties geregistreerd.</p>
-      {#if showComposer}
-        <form class="panel form" onsubmit={(e)=>{e.preventDefault();addPost();}}>
-          <h3>Wat wil je delen?</h3><label for="post-kind">Soort bericht</label><select id="post-kind" bind:value={postKind}><option value="vraag">Ik vraag iets</option><option value="aanbod">Ik bied iets aan</option><option value="gedachte">Ik deel een gedachte</option></select>
-          <label for="post-text">In je eigen woorden</label><textarea id="post-text" bind:value={postText} rows="3" maxlength="600" placeholder="Heeft iemand nog een tube ultramarijn?" required></textarea>
-          <label for="post-vis">Zichtbaarheid (concept)</label><select id="post-vis" bind:value={postVisibility}><option value="kring">Alleen schilderkring</option><option value="buurt">Buurt</option></select>
-          <p class="hint">De keuze is een demonstratie van de toekomstige rechtenstructuur. Deze demo wordt niet online gedeeld.</p><button type="submit" class="primary">Plaats in mijn demo</button>
-        </form>
-      {/if}
-      <h3 class="listtitle">Oproepen en gedachten</h3>
-      <div class="stack">
-        {#each posts as post (post.id)}
-          <article class:highlight={selectedPostId===post.id} class="panel post"><div class="postmeta"><span class="pill">{post.kind}</span><span>{post.visibility==='kring'?'Schildergroep':'Buurt (concept)'} · {when(post.createdAt)}</span></div><p>{post.text}</p><footer><span><button class="textbutton" onclick={()=>openPerson(post.author)}>{post.author} · Bekijk profiel</button> <button class="textbutton" onclick={()=>{tab='kaart';choosePost(post.id);}}>Toon op kaart</button> <button class="textbutton" onclick={openCircle}>Naar kring</button></span>{#if !post.demo}<button class="textbutton" onclick={()=>removePost(post.id)}>Verwijderen</button>{/if}</footer></article>
-        {/each}
-      </div>
-    {:else if tab==='kringen'}
-      <section class="sectionhead"><div><span class="eyebrow">EERSTE KRING</span><h2>De schildergroep</h2></div><span class="chip">Besloten · concept</span></section>
-      <p class="lead">Een eigen plek om te praten, materiaal te delen en iets van elkaar te ontdekken. In de echte versie alleen toegankelijk voor leden.</p>
-      <div class="channelbar"><button class:chosen={channel==='algemeen'} onclick={()=>channel='algemeen'}># algemeen</button><button class:chosen={channel==='materiaal'} onclick={()=>channel='materiaal'}># materiaal</button></div>
-      <div class="panel conversation">
-        {#each messages.filter(m=>m.channel===channel) as m (m.id)}<div class="message"><div class="avatar">{m.author.charAt(0).toUpperCase()}</div><div><div class="messagehead"><button class="person-button" onclick={()=>openPerson(m.author)}>{m.author}</button><span>{when(m.createdAt)}</span></div><p>{m.text}</p></div></div>{/each}
-        <form class="messageform" onsubmit={(e)=>{e.preventDefault();addMessage();}}><label for="chat-input">Schrijf in #{channel}</label><div class="sendrow"><input id="chat-input" bind:value={messageText} maxlength="500" placeholder="Wat wil je delen?" required/><button class="primary" type="submit">Plaats</button></div></form>
-      </div>
-      <p class="hint">Dit lijkt op een gedeeld gesprek, maar is alleen een lokale simulatie. Echte kringrechten en realtime berichten komen in een latere ontwikkelfase.</p>
-    {:else if tab==='profiel'}
-      <section class="sectionhead"><div><span class="eyebrow">PERSOONLIJKE PLEK</span><h2>{selectedPerson ? profileName : 'Mijn plek'}</h2></div>
-        {#if selectedPerson}<button class="primary" onclick={()=>openPerson(screenName)}>Terug naar mijn plek</button>{:else}<span class="chip">Alleen in deze browser</span>{/if}
+  </header>
+
+  {#if tab === 'kaart'}
+    <main class="map-layout">
+      <section class="map-area" aria-label="Kaart van de buurt">
+        <MapView {posts} selectedId={selectedPostId} onSelect={(id) => selectedPostId = id} />
+        <div class="map-caption">Voorbeeldpunten op buurtniveau, geen woonadressen.</div>
       </section>
-      <p class="lead">Een profiel is geen checklist van wie je bent. Vertel wat je wilt laten zien, of houd het eenvoudig.</p>
-      {#if selectedPerson}
-        <article class="panel profile-view"><h3>{profileName}</h3><p>{shownProfile.bio || 'Nog geen introductie.'}</p>
-          {#if shownProfile.appreciates}<h4>Wat me aanspreekt</h4><p>{shownProfile.appreciates}</p>{/if}
-          {#if shownProfile.dislikes}<h4>Waar ik op afhaak of over twijfel</h4><p>{shownProfile.dislikes}</p>{/if}
-          {#each safeLinks(shownProfile.links) as link}<p><a href={link} target="_blank" rel="noopener noreferrer">{link}</a></p>{/each}
-          <h4>Bijdragen in deze demo</h4>
-          {#each posts.filter(p=>p.author===selectedPerson) as p}<div class="profile-contribution"><p>{p.text}</p><button class="textbutton" onclick={()=>{tab='kaart';choosePost(p.id);}}>Bekijk op de kaart</button></div>{/each}
-          {#each connections.filter(c=>c.author===selectedPerson) as c}<div class="profile-contribution"><p>{c.reason}</p><span class="hint">Over {c.from} en {c.to}</span></div>{/each}
-        </article>
-      {:else}
-        <form class="panel form" onsubmit={(e)=>{e.preventDefault();persist();notice='Je profiel is in deze browser opgeslagen.';}}>
-          <label for="profile-bio">Iets over jezelf (mag ook heel kort)</label><textarea id="profile-bio" bind:value={myProfile.bio} rows="3" maxlength="1000" placeholder="Wie ben je, waar word je nieuwsgierig van?"></textarea>
-          <label for="profile-appreciates">Wat spreekt je aan?</label><textarea id="profile-appreciates" bind:value={myProfile.appreciates} rows="3" maxlength="700" placeholder="Bijvoorbeeld: klank, schilderen, onverwachte ontmoetingen…"></textarea>
-          <label for="profile-dislikes">Waar haak je op af, of waar twijfel je over?</label><textarea id="profile-dislikes" bind:value={myProfile.dislikes} rows="3" maxlength="700" placeholder="Mag genuanceerd, tegenstrijdig of leeg blijven."></textarea>
-          <label for="profile-links">Links naar andere plekken (één https-link per regel)</label><textarea id="profile-links" bind:value={myProfile.links} rows="3" maxlength="1200" placeholder="https://..."></textarea>
-          <button type="submit" class="primary">Bewaar mijn plek</button>
-        </form>
-        <div class="panel"><h3>Mijn bijdragen</h3>
-        {#if posts.filter(p=>p.author===screenName&&!p.demo).length===0 && connections.filter(c=>c.author===screenName&&!c.demo).length===0}<p class="hint">Je hebt nog geen bijdragen geplaatst. Dat hoeft ook niet.</p>{/if}
-        {#each posts.filter(p=>p.author===screenName&&!p.demo) as p}<div class="profile-contribution"><p>{p.text}</p><button class="textbutton" onclick={()=>{tab='kaart';choosePost(p.id);}}>Bekijk op kaart</button></div>{/each}
-        {#each connections.filter(c=>c.author===screenName&&!c.demo) as c}<div class="profile-contribution"><p>{c.reason}</p><span class="hint">Eerder geschreven over {c.from} en {c.to}</span></div>{/each}
+      <aside class="sidebar" aria-label="Oproepen">
+        <div class="sidebar-head">
+          <h1>In de buurt <span class="count">{posts.length}</span></h1>
+          <button class="action-link" onclick={() => showComposer = !showComposer}>{showComposer ? 'Sluiten' : '+ Bijdrage'}</button>
         </div>
+        {#if showComposer}
+          <form class="compose" onsubmit={(event) => {event.preventDefault(); addPost();}}>
+            <label for="post-kind">Soort bijdrage</label>
+            <select id="post-kind" bind:value={postKind}>
+              <option value="vraag">Vraag</option><option value="aanbod">Aanbod</option><option value="gedachte">Gedachte</option>
+            </select>
+            <label for="post-text">Bericht</label>
+            <textarea id="post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat speelt er?"></textarea>
+            <label for="post-visibility">Bereik</label>
+            <select id="post-visibility" bind:value={postVisibility}><option value="kring">Schildergroep</option><option value="buurt">Buurt</option></select>
+            <button class="solid-button" type="submit">Plaatsen</button>
+          </form>
+        {/if}
+        <div class="post-list">
+          {#each posts as post (post.id)}
+            <article class:selected={selectedPostId === post.id} class="post">
+              <button class="post-open" onclick={() => selectedPostId = post.id} aria-expanded={selectedPostId === post.id}>
+                <span class="post-meta">{post.kind} · {post.visibility === 'kring' ? 'Schildergroep' : 'Buurt'} · {when(post.createdAt)}</span>
+                <span class="post-text">{post.text}</span>
+              </button>
+              {#if selectedPostId === post.id}
+                <div class="post-actions">
+                  <button onclick={() => openPerson(post.author)}>{post.author}</button>
+                  <button onclick={openCircle}>Schildergroep</button>
+                  {#if !post.demo}<button onclick={() => removePost(post.id)}>Verwijder</button>{/if}
+                </div>
+              {/if}
+            </article>
+          {/each}
+        </div>
+      </aside>
+    </main>
+  {:else if tab === 'kringen'}
+    <main class="content-view">
+      <div class="section-title"><h1>Schildergroep</h1><span class="muted">Voorbeeldkring</span></div>
+      <div class="conversation-layout">
+        <nav class="channels" aria-label="Kanalen">
+          <button class:active={channel === 'algemeen'} onclick={() => channel = 'algemeen'}># algemeen</button>
+          <button class:active={channel === 'materiaal'} onclick={() => channel = 'materiaal'}># materiaal</button>
+        </nav>
+        <section class="conversation" aria-label="Gesprek">
+          <div class="messages">
+            {#each messages.filter((m) => m.channel === channel) as message (message.id)}
+              <article class="message">
+                <div class="message-line"><button class="author" onclick={() => openPerson(message.author)}>{message.author}</button><time>{when(message.createdAt)}</time></div>
+                <p>{message.text}</p>
+              </article>
+            {/each}
+          </div>
+          <form class="send-message" onsubmit={(event) => {event.preventDefault(); addMessage();}}>
+            <label for="message-text">Schrijf in #{channel}</label>
+            <div class="send-row">
+              <input id="message-text" bind:value={messageText} maxlength="500" required placeholder="Schrijf een bericht…"/>
+              <button type="submit" class="solid-button">Verstuur</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  {:else}
+    <main class="content-view profile-view">
+      <div class="section-title">
+        <h1>{selectedPerson || screenName || 'Mijn plek'}</h1>
+        {#if selectedPerson}<button class="action-link" onclick={() => openPerson(screenName)}>Mijn plek</button>{:else}<button class="action-link" onclick={() => editingProfile = !editingProfile}>{editingProfile ? 'Gereed' : 'Bewerken'}</button>{/if}
+      </div>
+      {#if !selectedPerson && editingProfile}
+        <form class="profile-form" onsubmit={(event) => {event.preventDefault(); persist(); editingProfile = false;}}>
+          <label for="display-name">Naam</label><input id="display-name" bind:value={screenName} maxlength="40" onblur={persist} />
+          <label for="profile-bio">Over mij</label><textarea id="profile-bio" bind:value={myProfile.bio} rows="4" maxlength="1000" placeholder="Vertel iets over jezelf."></textarea>
+          <label for="profile-appreciates">Wat me aanspreekt</label><textarea id="profile-appreciates" bind:value={myProfile.appreciates} rows="3" maxlength="700"></textarea>
+          <label for="profile-dislikes">Wat me tegenstaat of waar ik over twijfel</label><textarea id="profile-dislikes" bind:value={myProfile.dislikes} rows="3" maxlength="700"></textarea>
+          <label for="profile-links">Links (één https-adres per regel)</label><textarea id="profile-links" bind:value={myProfile.links} rows="3" maxlength="1200"></textarea>
+          <button type="submit" class="solid-button">Bewaren</button>
+        </form>
+      {:else}
+        <section class="profile-body">
+          <p class="profile-bio">{shownProfile.bio || (!selectedPerson ? 'Vertel hier iets over jezelf.' : 'Nog geen introductie.')}</p>
+          {#if shownProfile.appreciates}<div class="profile-field"><h2>Wat me aanspreekt</h2><p>{shownProfile.appreciates}</p></div>{/if}
+          {#if shownProfile.dislikes}<div class="profile-field"><h2>Wat me tegenstaat of waar ik over twijfel</h2><p>{shownProfile.dislikes}</p></div>{/if}
+          {#each links(shownProfile.links) as link}<p class="outbound"><a href={link} target="_blank" rel="noopener noreferrer">{link}</a></p>{/each}
+        </section>
+        <section class="contributions">
+          <h2>Bijdragen</h2>
+          {#if profilePosts.length === 0 && profileNotes.length === 0}<p class="muted">Nog geen bijdragen.</p>{/if}
+          {#each profilePosts as post (post.id)}
+            <div class="contribution"><span class="post-meta">{post.kind} · {when(post.createdAt)}</span><p>{post.text}</p><button class="action-link" onclick={() => {selectedPostId = post.id; tab = 'kaart';}}>Op de kaart</button></div>
+          {/each}
+          {#each profileNotes as note (note.id)}
+            <div class="contribution"><span class="post-meta">Eerdere notitie</span><p>{note.reason}</p></div>
+          {/each}
+        </section>
       {/if}
-    {/if}
-  </main>
-  <footer class="sitefoot"><p>Onder elkaar · lokale ontwerpdemonstratie · geen openbaar netwerk</p><button class="textbutton" onclick={reset}>Herstel voorbeelddata</button></footer>
+    </main>
+  {/if}
+
+  {#if notice}<p class="notice" role="status">{notice}</p>{/if}
+  <footer class="footer">
+    <span><strong>Demo.</strong> Voorbeeldpersonen en lokale browsergegevens; niets wordt met anderen gedeeld.</span>
+    <button onclick={reset}>Herstel voorbeelden</button>
+  </footer>
 </div>
+
 <style>
-  :global(*){box-sizing:border-box}:global(body){margin:0;background:#f7f7f2;color:#26362c;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5}:global(button),:global(input),:global(select),:global(textarea){font:inherit}:global(button){cursor:pointer}:global(button:focus-visible),:global(input:focus-visible),:global(select:focus-visible),:global(textarea:focus-visible){outline:3px solid #95bba7;outline-offset:2px}
-  .page{max-width:950px;margin:auto;padding:0 22px}.topbar{display:flex;align-items:center;justify-content:space-between;padding:25px 0 19px;border-bottom:1px solid #dce3d9}.brand{display:flex;gap:13px;align-items:center}.brandmark{background:#38634f;color:#fff;font-size:28px;width:45px;height:45px;display:grid;place-items:center;border-radius:13px}.brand strong{display:block;font-size:21px;letter-spacing:-.65px}.brand small{display:block;color:#6b766d;font-size:12px}.chip{font-size:12px;background:#e4ece3;padding:6px 11px;border-radius:100px;white-space:nowrap;color:#416149}.demo-warning{margin-top:18px;border:1px solid #ddc9a3;background:#fcf5e9;border-radius:12px;padding:12px 15px;font-size:13px;color:#695638}.intro{padding:37px 0 26px}.eyebrow{font-size:11px;color:#577965;font-weight:750;letter-spacing:1.4px}h1{font-size:clamp(31px,6vw,45px);line-height:1.15;margin:8px 0 12px;letter-spacing:-1.3px}h2{font-size:25px;letter-spacing:-.6px;line-height:1.2;margin:5px 0}h3{font-size:18px;margin:0 0 12px}.intro p,.lead{max-width:660px;font-size:15px;color:#607066}.intro p{margin:0}.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:#e9ece6;padding:5px;border-radius:14px;margin:4px 0 23px;gap:4px}.tabs button{border:none;background:transparent;border-radius:10px;padding:11px;color:#657467;font-weight:600}.tabs button.active{background:#fff;box-shadow:0 1px 6px #1b37210d;color:#264938}.identity{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#eef2ea;border-radius:12px;padding:9px 13px;margin-bottom:26px}.identity label{font-size:12px;font-weight:700}.identity input{width:130px;padding:7px 9px;border:1px solid #c8d6ca;border-radius:7px;background:white}.identity span{font-size:11px;color:#697769}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:0 0 18px}.primary{color:white;background:#376b50;border:1px solid #376b50;border-radius:9px;font-size:13px;font-weight:650;padding:10px 15px;white-space:nowrap}.primary:hover{background:#29583e}.hint{font-size:12px;color:#718174;margin:10px 0 22px}.listtitle{margin:24px 0 12px}.stack{display:grid;gap:12px}.panel{background:#fff;border:1px solid #e0e6db;border-radius:14px;padding:18px;box-shadow:0 2px 7px #0f2b1510}.postmeta{display:flex;justify-content:space-between;gap:10px;color:#738074;font-size:11px;align-items:center}.pill{color:#42634e;background:#eaf2e9;padding:3px 9px;border-radius:50px;text-transform:capitalize;font-weight:700}.post p,.connection p{font-size:15px;margin:11px 0 19px;white-space:pre-wrap;overflow-wrap:anywhere}.post footer,.connection footer{border-top:1px solid #eef0ec;padding-top:10px;display:flex;justify-content:space-between;color:#6e7c70;font-size:12px}.textbutton{border:0;background:transparent;text-decoration:underline;color:#3d6f55;font-size:12px;padding:0}.form{display:grid;gap:9px;margin:16px 0}.form label,.messageform label{font-weight:650;font-size:12px}.form input,.form select,.form textarea,.messageform input{width:100%;border:1px solid #cdd8cd;padding:10px;border-radius:9px;background:#fff;color:#26362c}.form .primary{justify-self:start}.form .hint{margin:0 0 8px}.channelbar{display:flex;gap:7px;margin:20px 0 12px}.channelbar button{border:1px solid #d3ddd2;background:#eef2ed;padding:9px 14px;border-radius:8px;color:#54705b}.channelbar button.chosen{background:#376b50;color:white}.conversation{min-height:250px}.message{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid #edf0eb}.avatar{height:34px;width:34px;flex:0 0 34px;border-radius:10px;background:#dfebe1;display:grid;place-items:center;color:#416a50;font-weight:750}.messagehead{display:flex;gap:10px;align-items:center}.messagehead strong{font-size:13px}.messagehead span{font-size:11px;color:#8b978b}.message p{margin:3px 0 0;font-size:14px;overflow-wrap:anywhere}.messageform{margin-top:24px;display:grid;gap:8px}.sendrow{display:flex;gap:9px}.connectionends{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:750}.connectionends span:not(.arrow){background:#eaf0e8;padding:7px 11px;border-radius:8px}.arrow{color:#7e9386}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}.twocol>div{display:grid;gap:8px}.sitefoot{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #dce3d9;margin-top:60px;padding:20px 0 35px;font-size:12px;color:#758274}.notice{color:#925f29}.lead{margin:0 0 12px}
-  .start-here{font-size:13px;background:#edf3e8;border:1px solid #dce7d9;border-radius:11px;padding:12px 14px;margin-bottom:15px}.inline-link{padding:0;border:0;background:transparent;text-decoration:underline;color:#28573e;font-weight:700}.profile-top{border:1px solid #b4c9b5;background:#ecf3ec;padding:9px 12px;border-radius:10px;color:#315c43;font-weight:700}.quick-actions{display:flex;flex-wrap:wrap;gap:9px}.quick-actions button{padding:7px 11px;border:1px solid #cdd9cf;background:#f3f7f0;color:#28553b;border-radius:8px;font-size:13px}.selected-post{margin:12px 0}.selected-post p{margin:8px 0 12px}.highlight{border-color:#78a588;box-shadow:0 0 0 1px #78a588}.person-button{color:#315d43;font-weight:700;border:0;background:transparent;padding:0;text-decoration:underline}.profile-view h4{margin:19px 0 5px;font-size:14px}.profile-view a{overflow-wrap:anywhere}.profile-contribution{padding:10px 0;border-top:1px solid #e3e9e0;font-size:13px}.profile-contribution p{margin:3px 0 8px}
-  @media(max-width:600px){.page{padding:0 14px}.topbar{padding:18px 0}.intro{padding:27px 0 20px}.sectionhead{align-items:flex-start}h2{font-size:22px}.panel{padding:14px}.sitefoot{flex-direction:column;align-items:flex-start}.twocol{grid-template-columns:1fr}.identity span{width:100%}.sendrow input{min-width:0}.tabs button{font-size:12px;padding:9px 4px}.profile-top{font-size:12px}}
+  :global(*){box-sizing:border-box}
+  :global(body){margin:0;background:#fafaf8;color:#242824;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5}
+  :global(button),:global(input),:global(select),:global(textarea){font:inherit}
+  :global(button){cursor:pointer}
+  :global(button:focus-visible),:global(input:focus-visible),:global(select:focus-visible),:global(textarea:focus-visible),:global(a:focus-visible){outline:2px solid #366d59;outline-offset:3px}
+  :global(a){color:inherit;text-decoration:underline;text-underline-offset:3px}
+  .app{min-height:100vh;display:flex;flex-direction:column}
+  .masthead{height:64px;padding:0 clamp(18px,3vw,46px);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e4e0;background:#fafaf8;gap:20px}
+  .wordmark{border:0;background:transparent;padding:0;font-size:25px;letter-spacing:-1.6px;font-weight:700;color:#202722;white-space:nowrap}
+  .dot{color:#bd5834}
+  .masthead nav{display:flex;align-items:center;gap:clamp(16px,2.6vw,32px);height:100%}
+  .masthead nav button{height:100%;padding:2px 0 0;border:0;border-bottom:2px solid transparent;background:none;color:#666e66}
+  .masthead nav button.active{color:#202722;border-bottom-color:#202722}
+  h1,h2,p{margin-top:0}
+  h1{font-weight:600;letter-spacing:-.4px;font-size:19px}
+  h2{font-size:15px;font-weight:600}
+  .muted,.post-meta,.count,time{color:#7b817a;font-size:12px;font-weight:400}
+  .map-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);flex:1;min-height:0}
+  .map-area{position:relative;min-width:0;background:#e9eae5;display:flex;flex-direction:column}
+  .map-caption{padding:9px 20px;font-size:11px;color:#646b62;background:#fafaf8;border-top:1px solid #e2e4e0}
+  .sidebar{min-width:0;border-left:1px solid #e2e4e0;background:#fafaf8}
+  .sidebar-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:22px 20px 17px;border-bottom:1px solid #e2e4e0}
+  .sidebar-head h1{margin:0}
+  .count{margin-left:4px}
+  .action-link{background:none;border:0;padding:0;color:#315c48;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+  .post{border-bottom:1px solid #e7e9e5;padding:0 20px}
+  .post.selected{background:#f1f3ef}
+  .post-open{display:block;width:100%;text-align:left;padding:18px 0;border:0;background:none;color:inherit}
+  .post-meta{display:block;margin-bottom:6px}
+  .post-text{display:block;font-size:14px;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}
+  .post-actions{display:flex;flex-wrap:wrap;gap:14px;padding:0 0 16px}
+  .post-actions button{padding:0;background:none;border:0;color:#315c48;text-decoration:underline;text-underline-offset:2px;font-size:12px}
+  .compose,.profile-form{display:grid;gap:9px;padding:18px 20px;border-bottom:1px solid #e2e4e0}
+  label{font-size:12px;color:#595f58}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd1c9;border-radius:2px;background:#fff;color:#242824;resize:vertical}
+  .solid-button{justify-self:start;border:0;border-radius:2px;background:#263c31;color:white;padding:9px 15px}
+  .content-view{width:min(980px,100%);margin:0 auto;padding:clamp(22px,4vw,52px) clamp(18px,3vw,36px);flex:1}
+  .section-title{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #dfe3dd;padding-bottom:22px;margin-bottom:28px;gap:12px}
+  .section-title h1{font-size:clamp(24px,3.5vw,34px);margin:0;font-weight:500}
+  .conversation-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:40px}
+  .channels{display:flex;flex-direction:column;align-items:stretch;gap:5px}
+  .channels button{padding:8px 10px;text-align:left;border:0;border-left:2px solid transparent;background:transparent;color:#687268}
+  .channels button.active{color:#1f3327;border-left-color:#27382d;background:#f0f2ee}
+  .message{padding:16px 0;border-bottom:1px solid #e5e7e3}
+  .message:first-child{padding-top:0}
+  .message-line{display:flex;align-items:baseline;gap:12px}
+  .author{border:0;background:none;padding:0;font-weight:600;color:#263b2e}
+  .message p{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .send-message{margin-top:32px}
+  .send-message label{display:block;margin-bottom:8px}
+  .send-row{display:flex;gap:8px}
+  .send-row input{min-width:0}
+  .profile-view{max-width:800px}
+  .profile-body{max-width:650px}
+  .profile-bio{font-size:17px;line-height:1.65;white-space:pre-wrap}
+  .profile-field{margin-top:25px}
+  .profile-field h2{margin-bottom:5px;color:#515a51;font-size:13px}
+  .profile-field p{white-space:pre-wrap;overflow-wrap:anywhere}
+  .outbound{overflow-wrap:anywhere}
+  .profile-form{padding:0 0 30px;border:0;max-width:620px}
+  .contributions{margin-top:44px;border-top:1px solid #dfe3dd;padding-top:20px}
+  .contributions>h2{font-size:17px;margin-bottom:15px}
+  .contribution{padding:15px 0;border-bottom:1px solid #e6e8e4}
+  .contribution p{margin:4px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .notice{padding:8px 20px}
+  .footer{padding:14px clamp(18px,3vw,46px);display:flex;justify-content:space-between;gap:16px;border-top:1px solid #e2e4e0;color:#767c75;font-size:11px}
+  .footer strong{font-weight:600}
+  .footer button{border:0;background:none;padding:0;text-decoration:underline;color:#555e55;font-size:11px}
+  @media(max-width:760px){
+    .masthead{height:58px}
+    .masthead nav{gap:15px}
+    .map-layout{display:flex;flex-direction:column}
+    .map-area{min-height:0}
+    .sidebar{border-left:0;border-top:1px solid #e2e4e0}
+    .sidebar-head{padding:18px}
+    .post{padding:0 18px}
+    .conversation-layout{grid-template-columns:1fr;gap:24px}
+    .channels{flex-direction:row;border-bottom:1px solid #e2e4e0}
+    .channels button{border-left:0;border-bottom:2px solid transparent}
+    .channels button.active{border-left:0;border-bottom-color:#27382d}
+    .footer{flex-direction:column;gap:6px}
+  }
+  @media(max-width:400px){.masthead nav{gap:10px}.masthead nav button{font-size:12px}.wordmark{font-size:23px}}
 </style>

@@ -18,3 +18,13 @@ Een hub die mensen, bestaande kringen, praktische hulpvragen en persoonlijke bet
 
 ## Pilot
 Een schildergroep als eerste kring. Binnen die kring kunnen deelnemers materialen delen, vragen stellen, vrij praten, eigen interesses tonen en elkaar gaandeweg op nieuwe gedachten brengen. De eerste openbare code gebruikt uitsluitend fictieve demo-inhoud. Echte deelname volgt alleen na veilige toegangsrechten, privacycontrole en afspraken over moderatie.
+
+## Visuele en interactionele richting — UI 0.2
+- **Inhoud eerst.** De gebruiker komt direct in een omgeving waar iets te vinden is; geen welkomsthero of instructies vóór de inhoud.
+- Neem het rustige, directe kaartgebruik van de Liedjeskaart van Nederland als referentie, zonder die vormgeving letterlijk te kopiëren.
+- Kaart en bijdragen staan in één overzicht; selectie van een marker en van een bijdrage blijft op elkaar aangesloten.
+- Gebruik sobere typografie, witruimte en dunne scheidingslijnen; vermijd kaart-in-kaart, badges, schaduwen, herhaald gekleurde panelen en overbodige iconen.
+- Een bijdrage-, profiel- of chatformulier verschijnt pas wanneer het nodig is.
+- Korte en eerlijke demovermelding blijft aanwezig, maar domineert niet de eerste blik.
+- Minimalisme is geen functionaliteitsreductie: externe links, vrije expressie, afkeer, kringen en uitleg over zichtbaarheid blijven mogelijk.
+- Toegankelijkheid is leidend: tekstlabels, focusstijlen, betekenisvolle knoppen en responsief gedrag.

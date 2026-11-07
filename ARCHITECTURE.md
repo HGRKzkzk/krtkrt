@@ -20,3 +20,6 @@ Accounts, uitnodigingsketens, gedeelde chat, moderatiedashboard, geolocatie van 
 
 ## Grenzen
 Betekenis ontstaat in menselijke expressie en interactie. De UI bevat geen route-editor, compatibiliteitsscore of zelfstandig Ontdek-tabblad. Historische demo-verbindingen worden behouden als tekst, zonder nieuwe expliciete route-objecten te laten maken.
+
+## UI 0.2 — presentatie
+De kaart is het primaire canvas; de bijdragenlijst is een aansluitende zijstrook (op smalle schermen onder de kaart). De overige primaire bestemmingen zijn Kringen en Mijn plek. De demo gebruikt dezelfde browseropslagsleutel als UI 0.1 om bestaande bijdragen en profielinhoud te behouden. De vormgeving bevat geen nieuw afhankelijkheden of backend.
