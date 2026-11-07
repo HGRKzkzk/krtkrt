@@ -51,22 +51,31 @@
 
 <div class="personal-place">
   <section class:ink={place.theme === 'ink'} class:colour={place.theme === 'kleur'} class:serif={place.typeface === 'serif'} class:mono={place.typeface === 'mono'} class="canvas">
-    <div class="canvas-head">
-      <h2>{person || 'Mijn plek'}</h2>
+    <header class="canvas-head">
+      <h2>Hoera! {person || 'Iemand'} bestaat.</h2>
+      {#if place.areaVisible && place.mapArea}<span class="location">Postcodegebied {place.mapArea.pc4}</span>{/if}
       {#if place.areaVisible && place.area.trim()}<span class="location">{place.area}</span>{/if}
-    </div>
-    <div class="blocks">
-      {#each place.blocks as block (block.id)}
-        <section class="piece">
-          {#if block.kind === 'text' && block.text.trim()}
-            <p class="authored-text">{block.text}</p>
-          {:else if block.kind === 'image' && block.image}
-            <figure><img src={block.image} alt={block.alt || 'Afbeelding op de persoonlijke plek'} />{#if block.text.trim()}<figcaption>{block.text}</figcaption>{/if}</figure>
-          {:else if block.kind === 'links'}
-            <div class="outbound-links">
-              {#each block.links.filter((l) => validExternalUrl(l.url)) as link (link.id)}
-                <div class="outbound-link">
-                  <a href={link.url} target="_blank" rel="noopener noreferrer" class="social-link">
+    </header>
+    {@const intro = place.blocks.find((block) => block.kind === 'text' && block.text.trim())}
+    {#if intro}<div class="introduction">{intro.text}</div>{/if}
+    {@const stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && block.text.trim()) || (block.kind === 'image' && block.image)))}
+    {#if stories.length}
+      <section class="stories">
+        <h3>Wat ik verder zoal doe</h3>
+        {#each stories as item (item.id)}
+          {#if item.kind === 'text'}<p class="authored-text">{item.text}</p>
+          {:else}<figure><img src={item.image} alt={item.alt || 'Afbeelding op de persoonlijke plek'} />{#if item.text.trim()}<figcaption>{item.text}</figcaption>{/if}</figure>{/if}
+        {/each}
+      </section>
+    {/if}
+    {@const allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)))}
+    {#if allLinks.length}
+      <section class="elsewhere">
+        <h3>Verder kijken</h3>
+        <div class="outbound-links">
+          {#each allLinks as link (link.id)}
+            <div class="outbound-link">
+              <a href={link.url} target="_blank" rel="noopener noreferrer" class="social-link">
                     <span class="platform-symbol" aria-hidden="true">
                       {#if linkSite(link.url).icon === 'instagram'}
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
@@ -84,23 +93,21 @@
                     </span>
                     {linkSite(link.url).recognized ? linkSite(link.url).name : link.label || linkSite(link.url).name}
                   </a>
-                  {#if link.description}<span>{link.description}</span>{/if}
-                </div>
-              {/each}
+              {#if link.description}<span>{link.description}</span>{/if}
             </div>
-          {/if}
-        </section>
-      {/each}
-      {#if place.blocks.length === 0}<p class="empty">{owner ? 'Je kunt hier iets over jezelf laten zien. Een naam alleen is ook prima.' : 'Er is hier nog niets toegevoegd.'}</p>{/if}
-    </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+    {#if !intro && !stories.length && !allLinks.length}<p class="empty">{owner ? 'Dit is jouw plek. Je kunt iets vertellen, maar dat hoeft niet.' : 'Op deze plek is nog niets geschreven.'}</p>{/if}
     {#if place.contactMode !== 'none' && place.contactNote.trim()}
-      <div class="contact"><span>{place.contactMode === 'elsewhere' ? 'Verder praten' : 'Elkaar ontmoeten'}</span><p>{place.contactNote}</p></div>
+      <section class="contact"><h3>{place.contactMode === 'elsewhere' ? 'Zeg elders hallo' : 'Zeg gerust hallo'}</h3><p>{place.contactNote}</p></section>
     {/if}
   </section>
 
   {#if owner && editing}
     <div class="studio" aria-label="Richt mijn plek in">
-      <div class="studio-header"><h3>Richt je plek in</h3><p>Voeg toe wat je wilt. Je hoeft niets af te maken.</p></div>
+      <div class="studio-header"><h3>Vertel iets over jezelf</h3><p>De pagina heeft een vaste opbouw. Jij bepaalt de inhoud en hoeveel je laat zien.</p></div>
       <div class="settings">
         <div class="setting"><label for="person-name">Naam</label><input id="person-name" maxlength="40" value={person} oninput={(e) => onNameChange(e.currentTarget.value)} /></div>
         <div class="setting"><label for="profile-theme">Achtergrond</label><select id="profile-theme" value={place.theme} onchange={(e) => change({ theme: e.currentTarget.value as Theme })}><option value="papier">Papier</option><option value="ink">Donker</option><option value="kleur">Warm</option></select></div>
@@ -111,16 +118,13 @@
         <input id="profile-area" maxlength="80" value={place.area} placeholder="Bijvoorbeeld: Korvel, Tilburg" oninput={(e) => change({ area: e.currentTarget.value })}/>
         <label class="check"><input type="checkbox" checked={place.areaVisible} onchange={(e) => change({ areaVisible: e.currentTarget.checked })}/> Toon deze aanduiding op mijn plek</label>
         <small>Dit is wat je zelf wilt delen, niet je woonadres. Er wordt nooit een exact adres opgeslagen.</small>
-        <label>Mijn gebied op de kaart (optioneel)</label>
+        <label>Mijn postcodegebied (optioneel)</label>
         <AreaPicker area={place.mapArea} onChange={(mapArea) => change({ mapArea })}/>
-        <div class="area-controls">
-          {#if place.mapArea}<span>Er is een ruim gebied geselecteerd.</span><button class="quiet" onclick={() => change({ mapArea: null })}>Gebied verwijderen</button>{:else}<span>Nog geen gebied gekozen.</span>{/if}
-        </div>
-        <small>Wanneer je de locatie zichtbaar maakt, verschijnt je persoonlijke markering op de kaart in het <strong>midden van dit globale gebied</strong>, niet op je woonadres.</small>
+        <small>Bij zichtbaarheid verschijnt dit postcodegebied als vlak op de kaart, niet als woonpunt.</small>
       </div>
 
       <div class="pieces-editor">
-        <h4>Onderdelen</h4>
+        <h4>Verhalen, beelden en vindplaatsen</h4>
         {#each place.blocks as block, i (block.id)}
           <div class="block-editor">
             <div class="block-top"><strong>{block.kind === 'text' ? 'Tekst' : block.kind === 'image' ? 'Afbeelding' : 'Links'}</strong>
@@ -191,10 +195,15 @@
   .canvas.colour{background:#f3d9bc;color:#4b3028;border-color:#e0c5a9}
   .canvas.serif{font-family:Georgia,'Times New Roman',serif}
   .canvas.mono{font-family:'Courier New',monospace}
-  .canvas-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px;margin-bottom:28px}
-  .canvas h2{font-family:inherit;font-size:clamp(25px,4vw,38px);letter-spacing:-.5px;font-weight:500;margin:0}
+  .canvas-head{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-bottom:28px}
+  .canvas h2{font-family:inherit;font-size:clamp(27px,4vw,43px);letter-spacing:-.8px;line-height:1.13;font-weight:600;margin:0}
   .location{font-size:13px;opacity:.75}
-  .blocks{display:flex;flex-direction:column;gap:22px}
+  .introduction{font-size:clamp(17px,2.2vw,20px);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-width:690px;margin:0 0 28px}
+  .stories,.elsewhere,.contact{max-width:690px;margin-top:36px}
+  .stories h3,.elsewhere h3,.contact h3{font-family:inherit;font-size:20px;margin:0 0 17px;font-weight:600}
+  .stories .authored-text{margin:0 0 17px}
+  .stories figure{margin:20px 0 26px}
+  .elsewhere{padding-top:8px}
   .piece{max-width:680px;min-width:0}
   .authored-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(15px,2vw,18px);line-height:1.65;margin:0}
   figure{margin:0}figure img{width:100%;height:auto;max-height:620px;object-fit:contain;display:block}figcaption{font-size:12px;margin-top:6px;opacity:.7}
