@@ -1,0 +1,6 @@
+# Development only: expose PocketBase admin panel on localhost.
+# Never add these bindings to the Pi/production override.
+services:
+  backend:
+    ports:
+      - "127.0.0.1:${PB_DEV_PORT:-8090}:8090"

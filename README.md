@@ -54,3 +54,15 @@ Voor een functionele wijziging moeten de relevante documenten in dezelfde PR wor
 Bij **Mijn plek** kun je optioneel een profielfoto kiezen, direct onder je naam. De browser maakt daarvan een kleine vierkante JPEG die lokaal wordt bewaard en als thumbnail terugkomt in de postcodepersonenlijst en bij bijdragen. Zonder foto gebruikt krtkrt initialen; een foto is geen voorwaarde om mee te doen. De foto wordt niet naar een server geüpload.
 
 De interface probeert bij een PC4-gebied een herkenbare **plaats-/gebiedsnaam** te tonen met gegevens van de PDOK Locatieserver. Als de naam niet betrouwbaar kan worden vastgesteld, blijft `Gebied 5041` (of de gekozen andere PC4) zichtbaar. Een PC4 is niet één-op-één een officiële wijk.
+
+## Docker: dezelfde basis op Windows en Raspberry Pi
+
+De eerste **infrastructuurproef** staat in [infra/README.md](infra/README.md). Via Docker Compose start je dezelfde statische webinterface en een **lege PocketBase-backend**, afzonderlijk op een Windows-home-pc (Docker Desktop/WSL2) of Raspberry Pi OS Lite 64-bit.
+
+Vanaf de repository-root op Windows:
+
+```powershell
+docker compose -p krtkrt-dev -f infra/compose.yaml -f infra/compose.dev.yaml up --build -d
+```
+
+Open daarna http://localhost:8080. Een test van het backendproxy-pad is http://localhost:8080/api/health. **Dit bouwt alleen de infrastructuur:** aanmelden, uitnodigingen, kringen met rechten en gedeelde profielen werken nog niet. De bestaande applicatie gebruikt nog uitsluitend browseropslag. Het Pi-startcommando, opslagafspraken, stopcommando's en veiligheidsgrenzen staan in de aparte handleiding.

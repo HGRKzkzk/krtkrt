@@ -1,0 +1,31 @@
+# Shared local/Pi architecture; select one environment override.
+# Run from repository root with -f infra/compose.yaml -f infra/compose.dev.yaml (or .pi.yaml).
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/pocketbase/Dockerfile
+      args:
+        POCKETBASE_VERSION: "0.40.6"
+    restart: unless-stopped
+    expose:
+      - "8090"
+    volumes:
+      - ${PB_DATA_DIR:-../data/pocketbase}:/pb/pb_data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8090/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 20s

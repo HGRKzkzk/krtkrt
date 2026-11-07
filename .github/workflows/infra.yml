@@ -1,0 +1,41 @@
+name: Docker infrastructure smoke test
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.dockerignore'
+      - '.github/workflows/infra.yml'
+      - 'package.json'
+      - 'svelte.config.js'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.dockerignore'
+      - '.github/workflows/infra.yml'
+
+jobs:
+  compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate development and Pi Compose configuration
+        run: |
+          docker compose -f infra/compose.yaml -f infra/compose.dev.yaml config --quiet
+          docker compose -f infra/compose.yaml -f infra/compose.pi.yaml config --quiet
+      - name: Build and start development containers
+        run: |
+          docker compose -p krtkrt-ci -f infra/compose.yaml -f infra/compose.dev.yaml up -d --build --wait
+      - name: Smoke-test frontend and proxied PocketBase health endpoint
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8080/ >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8080/api/health
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/_/)" = "404"
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -p krtkrt-ci -f infra/compose.yaml -f infra/compose.dev.yaml logs --no-color --tail=120
+      - name: Stop isolated test environment
+        if: always()
+        run: docker compose -p krtkrt-ci -f infra/compose.yaml -f infra/compose.dev.yaml down
