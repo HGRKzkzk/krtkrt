@@ -1,19 +1,42 @@
-// A voluntarily selected, deliberately coarse area, not a home coordinate.
-// Each grid cell is roughly two kilometres across around Tilburg.
-export type MapArea = { lon: number; lat: number };
-const LON_STEP = 0.03;
-const LAT_STEP = 0.018;
-export const AREA_RADIUS_METERS = 1500;
-export function snapArea(lon: number, lat: number): MapArea {
-  return {
-    lon: Number((Math.round(lon / LON_STEP) * LON_STEP).toFixed(3)),
-    lat: Number((Math.round(lat / LAT_STEP) * LAT_STEP).toFixed(3))
-  };
-}
+// PC4: postcodegebieden van vier cijfers, geen woonadressen en geen zelfgekozen pinnen.
+// Bron: Esri Nederland, Postcodevlakken PC4 (januari 2026), op BAG/open data gebaseerd.
+// De polygonen worden alleen voor het gekozen PC4-gebied opgehaald.
+export type MapArea = { pc4: string };
 export function cleanMapArea(value: unknown): MapArea | null {
   if (!value || typeof value !== 'object') return null;
-  const area = value as Partial<MapArea>;
-  if (typeof area.lon !== 'number' || typeof area.lat !== 'number' || !Number.isFinite(area.lon) || !Number.isFinite(area.lat) || Math.abs(area.lon) > 180 || Math.abs(area.lat) > 85) return null;
-  // Re-snap on load: never use a persisted unsnapped pinpoint.
-  return snapArea(area.lon, area.lat);
+  const pc4 = (value as { pc4?: unknown }).pc4;
+  return typeof pc4 === 'string' && /^[1-9][0-9]{3}$/.test(pc4) ? { pc4 } : null;
+}
+export function validPc4(value: string): boolean { return /^[1-9][0-9]{3}$/.test(value); }
+
+export type GeoFeatureCollection = {
+  type: 'FeatureCollection';
+  features: Array<{ type: 'Feature'; geometry: { type: string; coordinates: unknown }; properties: Record<string, unknown> }>;
+};
+const endpoint = 'https://services.arcgis.com/nSZVuSZjHpEZZbRo/arcgis/rest/services/Postcodevlakken_PC4/FeatureServer/0/query';
+const cache = new Map<string, Promise<GeoFeatureCollection>>();
+
+export function postcodeGeometry(pc4: string): Promise<GeoFeatureCollection> {
+  if (!validPc4(pc4)) return Promise.reject(new Error('Voer vier cijfers in.'));
+  const cached = cache.get(pc4);
+  if (cached) return cached;
+  const params = new URLSearchParams({
+    where: "PC4='" + pc4 + "'",
+    outFields: 'PC4',
+    returnGeometry: 'true',
+    outSR: '4326',
+    f: 'geojson'
+  });
+  const task = fetch(endpoint + '?' + params.toString(), { mode: 'cors' })
+    .then(async (response) => {
+      if (!response.ok) throw new Error('De postcodekaart is niet bereikbaar.');
+      const data: unknown = await response.json();
+      if (!data || typeof data !== 'object' || !('type' in data) || (data as { type: unknown }).type !== 'FeatureCollection') throw new Error('De postcodekaart kon niet worden gelezen.');
+      const collection = data as GeoFeatureCollection;
+      if (!Array.isArray(collection.features) || collection.features.length === 0) throw new Error('Geen gebied gevonden voor deze postcode.');
+      return collection;
+    });
+  cache.set(pc4, task);
+  task.catch(() => { if (cache.get(pc4) === task) cache.delete(pc4); });
+  return task;
 }
