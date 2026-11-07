@@ -79,6 +79,7 @@
         text:new Text({text:'IK',font:'bold 12px sans-serif',fill:new Fill({color:'#fff'})})
       }));
       profileSource.addFeature(point);
+      map.getView().fit(extent, { padding: [65,65,65,65], maxZoom: 12, duration: 200 });
     } catch {
       // No fabricated location if the external postcode service is unavailable.
     }
