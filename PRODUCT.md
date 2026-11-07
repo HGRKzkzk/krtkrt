@@ -43,3 +43,10 @@ Mijn plek is geen profielvolledigheidsopdracht maar een persoonlijke voordeur wa
 
 ### Eerste technische snede
 Een blokkeneditor met verplaatsbare tekst-, afbeeldings- en linkblokken, drie rustige kleurvarianten, drie letterkeuzes, een optionele globale buurtaanduiding en contactvoorkeur. Afbeeldingen worden als kleine lokale databestanden in de browser opgeslagen (maximaal 300 kB per bestand); er is geen uploadservice of publiek profiel. Vrije HTML/CSS, rich media en toegang per kring blijven latere beslissingen.
+
+## Kaart en persoonlijke vindplaatsen — uitbreiding op Mijn plek 0.3
+Deelnemers kunnen zelf op de kaart een **globaal gebied** kiezen. De opgeslagen positie wordt meteen naar een grof raster afgerond; de kaart toont een groot gebied in plaats van een pinpoint. Dit is niet bedoeld als de werkelijke woning of als geverifieerde wijkgrens. De instelling blijft vrijwillig; de bestaande zichtbaarheidsschakelaar regelt of de eigen profielmarkering in de lokale demo verschijnt. Een eigen profiel is herkenbaar met een afzonderlijk 'IK'-symbool en vanaf de kaart te openen.
+
+Voor bekende externe platforms zoals Instagram, Bandcamp, YouTube, Facebook, Bluesky, Spotify en LinkedIn leiden we de naam automatisch uit het webadres af. De eigenaar kan een persoonlijke toelichting toevoegen. Voor een onbekende website blijft een vrije naam mogelijk. Standaardiconen worden lokaal getekend, zonder trackers, externe scripts of faviconaanroepen.
+
+Een echte multi-user implementatie vergt aparte autorisatie voor de zichtbaarheid van profielgebieden, ook vóór gegevens naar een client gestuurd worden. De huidige browserdemo is geen echte publieke buurtkaart en levert geen persoonsverificatie.
