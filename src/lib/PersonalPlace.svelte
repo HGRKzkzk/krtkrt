@@ -12,6 +12,7 @@
   export let onChange: (next: PersonalPlace) => void = () => {};
   export let onNameChange: (name: string) => void = () => {};
   let imageError = '';
+  $: firstText = place.blocks.find((block) => block.kind === 'text');
   $: intro = place.blocks.find((block) => block.kind === 'text' && (block.text.trim() || richHasText(block.richText || '')));
   $: stories = place.blocks.filter((block) => block.kind !== 'links' && block.id !== intro?.id && ((block.kind === 'text' && (block.text.trim() || richHasText(block.richText || ''))) || (block.kind === 'image' && block.image)));
   $: allLinks = place.blocks.filter((block) => block.kind === 'links').flatMap((block) => block.links.filter((link) => validExternalUrl(link.url)));
@@ -123,9 +124,9 @@
         </div>
         <h4>Jouw verhaal</h4>
         <p>Dit is de eerste tekst die iemand op je persoonlijke pagina leest.</p>
-        {#if intro}
-          <RichTextEditor value={intro.richText || ''} fallbackText={intro.text}
-            onChange={(richText) => updateBlock(intro.id, {richText, text: ''})}/>
+        {#if firstText}
+          <RichTextEditor value={firstText.richText || ''} fallbackText={firstText.text}
+            onChange={(richText) => updateBlock(firstText.id, {richText, text: ''})}/>
         {:else}
           <button class="start-writing" onclick={() => addBlock('text')}>+ Begin met schrijven</button>
         {/if}
@@ -143,7 +144,7 @@
         <summary>Foto's, extra verhalen en links toevoegen</summary>
         <div class="pieces-editor">
           <p class="section-explainer">Je kunt later altijd iets toevoegen. Ook een pagina met alleen een naam of verhaal is prima.</p>
-        {#each place.blocks.filter((block) => block.id !== intro?.id) as block, i (block.id)}
+        {#each place.blocks.filter((block) => block.id !== firstText?.id) as block, i (block.id)}
           <div class="block-editor">
             <div class="block-top"><strong>{block.kind === 'text' ? 'Tekst' : block.kind === 'image' ? 'Afbeelding' : 'Links'}</strong>
               <div class="block-controls">
