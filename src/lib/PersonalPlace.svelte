@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PersonalPlace, ProfileBlock, ProfileLink, Theme, Typeface, ContactMode, BlockKind } from '$lib/personalPlace';
-  import { blankBlock, validExternalUrl } from '$lib/personalPlace';
+  import { blankBlock, validExternalUrl, linkSite } from '$lib/personalPlace';
+  import AreaPicker from '$lib/AreaPicker.svelte';
 
   export let place: PersonalPlace;
   export let person: string;
@@ -65,7 +66,24 @@
             <div class="outbound-links">
               {#each block.links.filter((l) => validExternalUrl(l.url)) as link (link.id)}
                 <div class="outbound-link">
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">{link.label || new URL(link.url).hostname}</a>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" class="social-link">
+                    <span class="platform-symbol" aria-hidden="true">
+                      {#if linkSite(link.url).icon === 'instagram'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                      {:else if linkSite(link.url).icon === 'youtube'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3Z" fill="currentColor" stroke="none"/></svg>
+                      {:else if linkSite(link.url).icon === 'bandcamp'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5h14L16 19H2Z"/></svg>
+                      {:else if linkSite(link.url).icon === 'facebook'}
+                        <span class="platform-letter">f</span>
+                      {:else if linkSite(link.url).icon === 'spotify'}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M5 10q8-3 14 1M6 13q7-2 12 1M7 16q6-1 10 1"/></svg>
+                      {:else}
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-5 5-5 13 0 18M12 3c5 5 5 13 0 18"/></svg>
+                      {/if}
+                    </span>
+                    {linkSite(link.url).recognized ? linkSite(link.url).name : link.label || linkSite(link.url).name}
+                  </a>
                   {#if link.description}<span>{link.description}</span>{/if}
                 </div>
               {/each}
@@ -92,7 +110,13 @@
         <label for="profile-area">Buurt, wijk of stad (mag leeg)</label>
         <input id="profile-area" maxlength="80" value={place.area} placeholder="Bijvoorbeeld: Korvel, Tilburg" oninput={(e) => change({ area: e.currentTarget.value })}/>
         <label class="check"><input type="checkbox" checked={place.areaVisible} onchange={(e) => change({ areaVisible: e.currentTarget.checked })}/> Toon deze aanduiding op mijn plek</label>
-        <small>Dit is wat je zelf wilt delen, niet je woonadres. Je profiel verschijnt niet als woonmarker op de kaart.</small>
+        <small>Dit is wat je zelf wilt delen, niet je woonadres. Er wordt nooit een exact adres opgeslagen.</small>
+        <label>Mijn gebied op de kaart (optioneel)</label>
+        <AreaPicker area={place.mapArea} onChange={(mapArea) => change({ mapArea })}/>
+        <div class="area-controls">
+          {#if place.mapArea}<span>Er is een ruim gebied geselecteerd.</span><button class="quiet" onclick={() => change({ mapArea: null })}>Gebied verwijderen</button>{:else}<span>Nog geen gebied gekozen.</span>{/if}
+        </div>
+        <small>Wanneer je de locatie zichtbaar maakt, verschijnt je persoonlijke markering op de kaart in het <strong>midden van dit globale gebied</strong>, niet op je woonadres.</small>
       </div>
 
       <div class="pieces-editor">
@@ -121,10 +145,16 @@
             {:else}
               {#each block.links as link (link.id)}
                 <div class="link-editor">
-                  <label for={'link-label-'+link.id}>Naam</label><input id={'link-label-'+link.id} maxlength="100" placeholder="Mijn Instagram, band, website…" value={link.label} oninput={(e) => updateLink(block, link.id, { label: e.currentTarget.value })}/>
-                  <label for={'link-url-'+link.id}>Link (https://)</label><input id={'link-url-'+link.id} maxlength="600" placeholder="https://…" value={link.url} oninput={(e) => updateLink(block, link.id, { url: e.currentTarget.value })}/>
+                  <label for={'link-url-'+link.id}>Link naar sociaal profiel of website (https://)</label><input id={'link-url-'+link.id} maxlength="600" placeholder="https://…" value={link.url} oninput={(e) => updateLink(block, link.id, { url: e.currentTarget.value })}/>
                   {#if link.url && !validExternalUrl(link.url)}<small class="error">Vul een geldig https-adres in.</small>{/if}
-                  <label for={'link-description-'+link.id}>Wat is daar te vinden?</label><input id={'link-description-'+link.id} maxlength="240" placeholder="Daar ben ik vooral actief…" value={link.description} oninput={(e) => updateLink(block, link.id, { description: e.currentTarget.value })}/>
+                  {#if validExternalUrl(link.url)}
+                    <small>Wordt getoond als: <strong>{linkSite(link.url).name}</strong>{linkSite(link.url).recognized ? ' (automatisch met icoon)' : ''}</small>
+                  {/if}
+                  {#if validExternalUrl(link.url) && !linkSite(link.url).recognized}
+                    <label for={'link-label-'+link.id}>Andere naam voor deze website (optioneel)</label>
+                    <input id={'link-label-'+link.id} maxlength="100" placeholder="Mijn blog, mijn band…" value={link.label} oninput={(e) => updateLink(block, link.id, { label: e.currentTarget.value })}/>
+                  {/if}
+                  <label for={'link-description-'+link.id}>Wat is daar te vinden? (optioneel)</label><input id={'link-description-'+link.id} maxlength="240" placeholder="Daar ben ik vooral actief…" value={link.description} oninput={(e) => updateLink(block, link.id, { description: e.currentTarget.value })}/>
                   <button class="quiet" onclick={() => updateBlock(block.id, { links: block.links.filter((x) => x.id !== link.id) })}>Link weghalen</button>
                 </div>
               {/each}
@@ -170,6 +200,10 @@
   figure{margin:0}figure img{width:100%;height:auto;max-height:620px;object-fit:contain;display:block}figcaption{font-size:12px;margin-top:6px;opacity:.7}
   .outbound-links{display:flex;flex-direction:column;gap:13px}.outbound-link{display:flex;align-items:baseline;gap:4px 13px;flex-wrap:wrap}
   .outbound-link a{color:inherit;font-weight:600;text-underline-offset:3px;overflow-wrap:anywhere}
+  .social-link{display:inline-flex;align-items:center;gap:8px}
+  .platform-symbol{width:23px;height:23px;border:1px solid currentColor;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .platform-letter{font:bold 18px Arial,sans-serif}
+  .area-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12px;color:#566358}
   .outbound-link span{font-size:13px;opacity:.8}
   .contact{border-top:1px solid currentColor;margin-top:28px;padding-top:15px;max-width:680px}
   .contact span{font-size:12px;opacity:.7}.contact p{margin:6px 0 0;white-space:pre-wrap}
