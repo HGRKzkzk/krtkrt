@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import MapView from '$lib/MapView.svelte';
   import CircleMap from '$lib/CircleMap.svelte';
   import CircleDiscussion from '$lib/CircleDiscussion.svelte';
@@ -180,6 +180,11 @@
     circleDraftKind='gesprek';
     circleFilter='alles';
     document.getElementById('circle-entry')?.focus();
+  }
+  async function goToOrigin(parentId:string) {
+    circleFilter='alles';
+    await tick();
+    document.getElementById('circle-'+parentId)?.scrollIntoView({behavior:'smooth',block:'center'});
   }
   function deleteCirclePost(id:string) {
     const match=posts.find(post=>post.id===id);
@@ -373,7 +378,7 @@
                 {replies} filter={circleFilter}
                 circleName={activeCircle.name} {screenName} ownAvatar={personalPlace.avatar || ''}
                 onReply={addCircleReply} onStatus={setCircleState} onBranch={startFrom}
-                onDelete={deleteCirclePost} onPerson={openPerson}
+                onDelete={deleteCirclePost} onPerson={openPerson} onOrigin={goToOrigin}
               />
             </section>
           </div>
