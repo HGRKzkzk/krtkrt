@@ -70,3 +70,9 @@ Een bijdrage hoort bij één gekozen context; delen over kringgrenzen heen is ee
 Een kring wordt niet opgeknipt in een blok 'bijdragen' en daaronder een apart blok 'gesprekken'. Bijdragen, vragen, aanbod, gedachten en korte gespreksberichten verschijnen in één rustige stroom, chronologisch en zonder rangschikkingsalgoritme. Het eerste handelingsperspectief is eenvoudig: **iets delen met de kring**. Wie dat wil kan de vorm (gesprek, vraag, aanbod, gedachte) kiezen en voor gesprekken een onderwerp aanduiden. Kanalen zijn filters op het gesprek, niet concurrerende sociale bestemmingen.
 
 De contextuele kaart blijft een optionele tweede kijkwijze onder `Plekken en activiteiten`. Dat meerdere vormen van expressie samen verschijnen, verandert niets aan de toekomstige noodzaak om kringrechten en het bewust delen buiten de kring op de server af te dwingen.
+
+## Van oproep naar gesprek: zonder verplichte overgang
+
+Een bijdrage is het vertrekpunt voor interactie, geen vastgelegde gespreksvorm. Vragen, aanbod, gedachten en gesprekken gebruiken dezelfde basisvorm en kunnen allemaal reacties krijgen. De reactie blijft bij de oorspronkelijke bijdrage. Een vraag hoeft niet als gesprek te worden 'omgezet' en veel reacties geven geen hogere algoritmische rangschikking. De kringstroom blijft chronologisch naar oorspronkelijke plaatsing geordend.
+
+De oorspronkelijke auteur kan bij een **vraag of aanbod** vrijwillig aangeven of deze nog actueel is of geregeld. Dat verandert **alleen de praktische toestand** en sluit het gesprek niet. Wie vanuit een reactie een zelfstandig initiatief wil starten, kan een nieuwe bijdrage maken met een verwijzing naar de eerdere bijdrage; het oude gesprek blijft behouden. Deze verwantschap is beschrijvend, geen voorgeschreven proces of automatische promotie.
