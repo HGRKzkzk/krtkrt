@@ -1,7 +1,7 @@
-import type { Post, Message, Connection } from './types';
+import type { Post, Message, Connection, CircleReply } from './types';
 const now = Date.parse('2026-11-01T18:00:00Z');
 export const demoPosts: Post[] = [
-  {id:'p1', author:'Noor (voorbeeld)',kind:'vraag',text:'Heeft iemand een brede kwast die ik voor de volgende les kan lenen?',visibility:'kring',circle:'Schildergroep',createdAt:now,demo:true},
+  {id:'p1', author:'Noor (voorbeeld)',kind:'vraag',text:'Heeft iemand een brede kwast die ik voor de volgende les kan lenen?',visibility:'kring',circle:'Schildergroep',createdAt:now,state:'open',demo:true},
   {id:'p2', author:'Sam (voorbeeld)',kind:'aanbod',text:'Ik heb nog wat ultramarijn en okergeel over. Wie kan het gebruiken?',visibility:'kring',circle:'Schildergroep',createdAt:now-300000,demo:true},
   {id:'p3', author:'Alex (voorbeeld)',kind:'vraag',text:'Heeft iemand een klopboormachine die ik een middag mag lenen?',visibility:'buurt',circle:'Schildergroep',createdAt:now-600000,demo:true},
   {id:'p4', author:'Mika (voorbeeld)',kind:'gedachte',text:'Wat maakt dat sommige schilderijen juist werken wanneer je iets níét precies herkent?',visibility:'kring',circle:'Schildergroep',createdAt:now-900000,demo:true},
@@ -20,4 +20,9 @@ export const demoMessages: Message[] = [
 export const demoConnections: Connection[] = [
   {id:'c1',from:'Brian Eno',to:'Aphex Twin',reason:'Misschien een gedeelde zoektocht naar klank als ruimte, ondanks heel andere luisterervaringen.',author:'Voorbeeldbijdrage',createdAt:now,demo:true},
   {id:'c2',from:'Kate Bush',to:'Peter Gabriel (I–III)',reason:'Een mogelijke verwantschap in de zoektocht naar vorm, productie en expressie.',author:'Voorbeeldbijdrage',createdAt:now,demo:true}
+];
+// Fictieve antwoorden blijven bij de oorspronkelijke oproep, niet als losse kaartitems.
+export const demoReplies: CircleReply[] = [
+  {id:'r-demo-1',parentId:'post-p1',author:'Sam (voorbeeld)',text:'Ik heb er eentje. Die kan ik donderdag meenemen.',createdAt:now+600000,demo:true},
+  {id:'r-demo-2',parentId:'post-p1',author:'Mika (voorbeeld)',text:'Hebben jullie die brede kwasten ook wel eens op klein papier gebruikt?',createdAt:now+900000,demo:true}
 ];
