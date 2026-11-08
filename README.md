@@ -78,3 +78,9 @@ Op de algemene buurtkaart verschijnen alleen buurtbijdragen, geen kringgebonden 
 De kringpagina toont nu één doorlopende stroom met vragen, aanbod, gedachten en gesprekken in chronologische volgorde. Het schrijfvlak staat vooraan: kies daar of je een gesprek begint, een vraag stelt, iets aanbiedt of een gedachte deelt. Voor gesprekken kun je desgewenst een onderwerp/kanaal kiezen. Via subtiele filters zijn losse gespreksonderwerpen terug te vinden; `Alles` toont de hele kringstroom. De kaart met fictieve activiteiten blijft bereikbaar via `Plekken en activiteiten` maar onderbreekt niet langer de kringconversatie.
 
 Bestaande demobijdragen en schildergroepberichten blijven behouden. Nieuwe bijdragen blijven lokale browserdemo-data en zijn geen werkelijk afgeschermde groepscommunicatie.
+
+## Reacties en praktische voortgang binnen kringen
+
+Een nieuwe bijdrage in een kring is nu één basisvorm, met een optioneel karakter (gesprek, vraag, aanbod of gedachte). Iedere bijdrage kan **rechtstreeks reacties** krijgen. Antwoorden verschijnen onder de oorspronkelijke bijdrage, niet als losse items in de kringstroom. Bij praktische vragen of aanbod kan de **eigen auteur** desgewenst aangeven of die nog openstaan of inmiddels geregeld zijn, zonder de reacties te sluiten. Vanuit een bestaande bijdrage kan iemand een **nieuw idee** beginnen, met een verwijzing naar het eerdere gesprek.
+
+Oude schildergroepberichten blijven leesbaar naast nieuwe bijdragen. De nieuwe reacties worden uitsluitend in de lokale browserdemo opgeslagen, niet gedeeld met echte andere gebruikers. Herstel voorbeelden wist ook nieuwe lokale reacties.
