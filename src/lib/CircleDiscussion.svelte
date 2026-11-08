@@ -13,6 +13,7 @@
   export let onBranch: (parentId:string) => void = () => {};
   export let onDelete: (id:string) => void = () => {};
   export let onPerson: (name:string) => void = () => {};
+  export let onOrigin: (id:string) => void = () => {};
   let replyTo: string | null = null;
   let draft = '';
   $: entries = [
@@ -48,7 +49,7 @@
     <p class="muted empty-feed">Hier is nog niets geplaatst. Je kunt hierboven iets beginnen.</p>
   {/if}
   {#each entries as item (item.id)}
-    <article class="entry">
+    <article class="entry" id={"circle-"+item.id}>
       <Avatar name={item.author} image={item.author===screenName?ownAvatar:''}/>
       <div class="body">
         <div class="heading">
@@ -57,7 +58,7 @@
         </div>
         <p class="entry-text">{item.text}</p>
         {#if item.post?.originId}
-          <p class="origin">Ontstaan uit een eerdere bijdrage in deze kring</p>
+          <button class="origin" onclick={() => onOrigin(item.post!.originId!)}>Ontstaan uit een eerdere bijdrage · Bekijk oorsprong</button>
         {/if}
         {#if item.post && (item.post.kind==='vraag' || item.post.kind==='aanbod')}
           <div class="state-row">
@@ -122,7 +123,7 @@
   .heading{display:flex;gap:8px 13px;align-items:baseline;flex-wrap:wrap}
   .author{background:transparent;border:0;padding:0;color:#2c4936;font-weight:600}
   .entry-text{margin:7px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.6}
-  .origin{color:#6d7b70;font-size:12px}
+  .origin{background:none;border:0;padding:0;color:#4e7457;font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   .state-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
   .state-tag{background:#e8f0e7;color:#33573d;padding:3px 9px;font-size:12px;border-radius:3px}
   .state-row label{color:#536353;font-size:12px;display:flex;gap:7px;align-items:center}
