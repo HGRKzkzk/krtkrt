@@ -64,3 +64,9 @@ PC4 blijft de geografische sleutel. In de presentatie gaat een begrijpelijke pla
 De eerste frontendproef bevat drie fictieve kringen: een schilderklasje met één ontmoetingsplek, Band A met verschillende activiteitlocaties en Band B zonder geografische aanduiding. Ieder verband heeft een eigen ingang, gesprekken en bijdragen. Vanuit een kring is een contextuele kaart te openen met uitsluitend expliciet opgegeven activiteiten of plekken. Een kring zonder locatie blijft volledig bruikbaar. **Leden worden niet automatisch op een kringkaart gezet.**
 
 Een bijdrage hoort bij één gekozen context; delen over kringgrenzen heen is een latere expliciete handeling met eigen zichtbaarheid en toestemming. De buurtkaart toont geen kringinterne bijdragen als automatisch geolokaliseerde punten. Een daadwerkelijke scheiding tussen besloten kringen vergt serverautorisatie en is nog niet aanwezig.
+
+## Binnen een kring: één doorgaand gesprek
+
+Een kring wordt niet opgeknipt in een blok 'bijdragen' en daaronder een apart blok 'gesprekken'. Bijdragen, vragen, aanbod, gedachten en korte gespreksberichten verschijnen in één rustige stroom, chronologisch en zonder rangschikkingsalgoritme. Het eerste handelingsperspectief is eenvoudig: **iets delen met de kring**. Wie dat wil kan de vorm (gesprek, vraag, aanbod, gedachte) kiezen en voor gesprekken een onderwerp aanduiden. Kanalen zijn filters op het gesprek, niet concurrerende sociale bestemmingen.
+
+De contextuele kaart blijft een optionele tweede kijkwijze onder `Plekken en activiteiten`. Dat meerdere vormen van expressie samen verschijnen, verandert niets aan de toekomstige noodzaak om kringrechten en het bewust delen buiten de kring op de server af te dwingen.

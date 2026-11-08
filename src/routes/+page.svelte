@@ -27,6 +27,8 @@
   let channel = 'algemeen';
   let activeCircleId: CircleId | null = null;
   let showCircleMap = false;
+  let circleFilter = 'alles';
+  let circleDraftKind: 'gesprek' | Kind = 'gesprek';
   let showComposer = false;
   let editingProfile = false;
   let postText = '';
@@ -47,6 +49,12 @@
   $: activeCircle = activeCircleId ? circleById(activeCircleId) : null;
   $: circlePosts = activeCircle ? posts.filter((p) => p.circle === activeCircle.name || (activeCircle.id === 'schildergroep' && p.circle === 'Schildergroep')) : [];
   $: mapPosts = posts.filter((p) => p.visibility === 'buurt');
+  $: circleFeed = activeCircle ? [
+    ...circlePosts.map((post) => ({id:'post-'+post.id, kind:'post' as const, author:post.author, text:post.text, timestamp:post.createdAt, label:post.kind, channel:'', post})),
+    ...messages.filter((message) => message.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !message.circle))
+      .map((message) => ({id:'message-'+message.id, kind:'message' as const, author:message.author, text:message.text, timestamp:message.createdAt, label:'gesprek', channel:message.channel, message}))
+  ].filter((entry) => circleFilter === 'alles' || (entry.kind === 'message' && entry.channel === circleFilter))
+    .sort((a,b) => b.timestamp - a.timestamp || a.id.localeCompare(b.id)) : [];
   $: profileName = selectedPerson || screenName || 'Gast';
   $: shownProfile = selectedPerson
     ? (demoNeighbours.find((person) => person.name === selectedPerson)
@@ -96,12 +104,16 @@
   function openCircle(id: CircleId = 'schildergroep') {
     activeCircleId = id;
     channel = 'algemeen';
+    circleFilter = 'alles';
+    circleDraftKind = 'gesprek';
+    messageText = '';
     showCircleMap = false;
     showComposer = false;
     tab = 'kringen';
   }
   function circlesOverview() {
     activeCircleId = null;
+    circleFilter = 'alles';
     showCircleMap = false;
     showComposer = false;
     tab = 'kringen';
@@ -131,6 +143,20 @@
     messages = [...messages, { id: crypto.randomUUID(), author: screenName.trim() || 'Gast', channel, circle:activeCircle.name, text: messageText.trim(), createdAt: Date.now() }];
     messageText = '';
     persist();
+  }
+  function publishCircleEntry() {
+    if (!activeCircle) return;
+    if (circleDraftKind === 'gesprek') {
+      if (!messageText.trim()) return;
+      addMessage();
+    } else {
+      if (!messageText.trim()) return;
+      postKind = circleDraftKind;
+      postText = messageText;
+      addPost();
+      messageText = '';
+    }
+    circleFilter = 'alles';
   }
   function removePost(id: string) {
     posts = posts.filter((p) => p.id !== id);
@@ -248,9 +274,9 @@
           <span class="muted">Fictieve kring</span>
         </div>
         <p class="circle-lead">{activeCircle.description}</p>
-        <div class="circle-navigation">
-          <button class:chosen={!showCircleMap} onclick={() => showCircleMap = false}>Gesprekken en bijdragen</button>
-          <button class:chosen={showCircleMap} onclick={() => showCircleMap = true}>Bekijk op kaart{activeCircle.places.length ? ' (' + activeCircle.places.length + ')' : ''}</button>
+        <div class="circle-navigation" aria-label="Kring verkennen">
+          <button class:chosen={!showCircleMap} onclick={() => showCircleMap = false}>In de kring</button>
+          <button class:chosen={showCircleMap} onclick={() => showCircleMap = true}>Plekken en activiteiten{activeCircle.places.length ? ' · ' + activeCircle.places.length : ''}</button>
         </div>
         {#if showCircleMap}
           <section aria-label="Geografische context van deze kring">
@@ -266,55 +292,69 @@
               <div class="no-map-place">
                 <h2>Deze kring heeft geen kaartlocatie</h2>
                 <p>De band bestaat ook zonder vaste plek. Er zijn geen locaties of activiteiten opgegeven; we tekenen geen kunstmatige positie en tonen geen locaties van leden.</p>
-                <button class="action-link" onclick={() => showCircleMap = false}>Terug naar de gesprekken</button>
+                <button class="action-link" onclick={() => showCircleMap = false}>Terug naar de kring</button>
               </div>
             {/if}
           </section>
         {:else}
-          <section class="circle-posts" aria-label="Bijdragen uit deze kring">
-            <div class="circle-post-head"><h2>Wat er in deze kring speelt</h2><button class="action-link" onclick={() => showComposer = !showComposer}>{showComposer ? 'Sluiten' : '+ Bijdrage'}</button></div>
-            {#if showComposer}
-              <form class="circle-compose" onsubmit={(event) => {event.preventDefault(); addPost();}}>
-                <label for="circle-post-kind">Soort bijdrage</label>
-                <select id="circle-post-kind" bind:value={postKind}><option value="vraag">Vraag</option><option value="aanbod">Aanbod</option><option value="gedachte">Gedachte</option></select>
-                <label for="circle-post-text">Bericht</label>
-                <textarea id="circle-post-text" bind:value={postText} rows="3" maxlength="600" required placeholder="Wat wil je delen met deze kring?"></textarea>
-                <small>Alleen zichtbaar in deze fictieve kringweergave; geen echte toegangsrechten.</small>
-                <button type="submit" class="solid-button">Plaatsen (demo)</button>
+          <div class="circle-flow">
+            <section class="circle-editor" aria-label="Iets delen met deze kring">
+              <div class="circle-editor-identity">
+                <Avatar name={screenName} image={personalPlace.avatar || ''} size="medium"/>
+                <div><strong>{screenName || 'Gast'}</strong><span>Wat wil je met deze kring delen?</span></div>
+              </div>
+              <form onsubmit={(event) => {event.preventDefault(); publishCircleEntry();}}>
+                <label class="visually-hidden" for="circle-entry">Schrijf iets voor deze kring</label>
+                <textarea id="circle-entry" bind:value={messageText} rows="3" maxlength="600" required
+                  placeholder={circleDraftKind === 'gesprek' ? 'Een vraag, observatie of iets om samen over te praten…' : 'Wat wil je ' + (circleDraftKind === 'vraag' ? 'vragen' : circleDraftKind === 'aanbod' ? 'aanbieden' : 'delen') + '?'}></textarea>
+                <div class="circle-editor-bottom">
+                  <fieldset class="entry-types">
+                    <legend>Soort bijdrage</legend>
+                    {#each [{id:'gesprek',label:'Gesprek'},{id:'vraag',label:'Vraag'},{id:'aanbod',label:'Aanbod'},{id:'gedachte',label:'Gedachte'}] as type}
+                      <button type="button" class:chosen={circleDraftKind===type.id}
+                        aria-pressed={circleDraftKind===type.id}
+                        onclick={() => circleDraftKind=type.id as 'gesprek' | Kind}>{type.label}</button>
+                    {/each}
+                  </fieldset>
+                  <button type="submit" class="solid-button" disabled={!messageText.trim()}>Delen</button>
+                </div>
+                {#if circleDraftKind === 'gesprek' && activeCircle.channels.length > 1}
+                  <div class="channel-choice"><label for="circle-channel">Onderwerp</label>
+                    <select id="circle-channel" bind:value={channel}>
+                      {#each activeCircle.channels as option}<option value={option}># {option}</option>{/each}
+                    </select>
+                  </div>
+                {/if}
+                <p class="circle-draft-note">Alleen in deze fictieve kringweergave; er zijn nog geen echte toegangsrechten.</p>
               </form>
-            {/if}
-            {#if circlePosts.length === 0}<p class="muted">Nog geen bijdragen in deze kring.</p>{/if}
-            {#each circlePosts as post (post.id)}
-              <article class="circle-post">
-                <div class="post-meta">{post.kind} · {when(post.createdAt)} · {post.visibility === 'kring' ? 'In deze kring' : 'Gedeeld met de buurt'}</div>
-                <p>{post.text}</p>
-                <button class="author" onclick={() => openPerson(post.author)}>{post.author}</button>
-              </article>
-            {/each}
-          </section>
-          <div class="conversation-layout">
-            <nav class="channels" aria-label={'Kanalen van ' + activeCircle.name}>
-              <h2>Gesprekken</h2>
-              {#each activeCircle.channels as option}
-                <button class:active={channel === option} onclick={() => channel = option}># {option}</button>
-              {/each}
-            </nav>
-            <section class="conversation" aria-label="Gesprek">
-              <div class="messages">
-                {#each messages.filter((m) => m.channel === channel && (m.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !m.circle))) as message (message.id)}
-                  <article class="message">
-                    <div class="message-line"><button class="author" onclick={() => openPerson(message.author)}>{message.author}</button><time>{when(message.createdAt)}</time></div>
-                    <p>{message.text}</p>
-                  </article>
+            </section>
+
+            <section class="circle-stream" aria-label="Wat er in deze kring gebeurt">
+              <div class="stream-heading"><h2>In de kring</h2><span class="muted">{circleFeed.length} {circleFeed.length === 1 ? 'bijdrage' : 'bijdragen'}</span></div>
+              <div class="stream-filters" aria-label="Filter op gespreksonderwerp">
+                <button class:selected={circleFilter === 'alles'} aria-pressed={circleFilter === 'alles'} onclick={() => circleFilter='alles'}>Alles</button>
+                {#each activeCircle.channels as option}
+                  <button class:selected={circleFilter === option} aria-pressed={circleFilter === option} onclick={() => circleFilter=option}># {option}</button>
                 {/each}
               </div>
-              <form class="send-message" onsubmit={(event) => {event.preventDefault(); addMessage();}}>
-                <label for="message-text">Schrijf in #{channel} · {activeCircle.name}</label>
-                <div class="send-row">
-                  <input id="message-text" bind:value={messageText} maxlength="500" required placeholder="Schrijf een bericht…"/>
-                  <button type="submit" class="solid-button">Verstuur (demo)</button>
-                </div>
-              </form>
+              {#if circleFeed.length === 0}
+                <p class="muted empty-feed">Nog niets in dit onderdeel. Je kunt hierboven zelf iets beginnen.</p>
+              {/if}
+              {#each circleFeed as entry (entry.id)}
+                <article class="feed-entry">
+                  <div class="feed-avatar"><Avatar name={entry.author} image={entry.author === screenName ? (personalPlace.avatar || '') : ''}/></div>
+                  <div class="feed-body">
+                    <div class="feed-heading">
+                      <button class="author" onclick={() => openPerson(entry.author)}>{entry.author}</button>
+                      <span class="feed-detail">{entry.kind === 'post' ? entry.label : '# ' + entry.channel} · {when(entry.timestamp)}</span>
+                    </div>
+                    <p>{entry.text}</p>
+                    {#if entry.kind === 'post' && !entry.post.demo && entry.author === screenName}
+                      <button class="feed-remove" onclick={() => removePost(entry.post.id)}>Verwijderen</button>
+                    {/if}
+                  </div>
+                </article>
+              {/each}
             </section>
           </div>
           <section class="circle-members">
@@ -438,6 +478,36 @@
   .profile-field p{white-space:pre-wrap;overflow-wrap:anywhere}
   .outbound{overflow-wrap:anywhere}
   .profile-form{padding:0 0 30px;border:0;max-width:620px}
+  .circle-flow{max-width:760px}
+  .circle-editor{padding:18px 20px 15px;border:1px solid #dce2db;background:#f6f8f4;margin:14px 0 38px}
+  .circle-editor-identity{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .circle-editor-identity div{display:flex;flex-direction:column;gap:2px}
+  .circle-editor-identity strong{font-weight:600}
+  .circle-editor-identity span{font-size:12px;color:#68746a}
+  .circle-editor textarea{width:100%;min-height:96px;background:#fff;resize:vertical;border:1px solid #c8d4c8}
+  .circle-editor-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .entry-types{border:0;padding:0;margin:0;display:flex;gap:5px;flex-wrap:wrap}
+  .entry-types legend{font-size:12px;color:#56685b;margin-bottom:4px}
+  .entry-types button,.stream-filters button{background:transparent;border:1px solid transparent;border-radius:3px;padding:5px 9px;color:#536555}
+  .entry-types button.chosen,.stream-filters button.selected{background:#e4ebe2;color:#274732;border-color:#cbdacb}
+  .circle-editor-bottom .solid-button:disabled{opacity:.5;cursor:default}
+  .channel-choice{display:flex;align-items:center;gap:12px;max-width:340px;margin-top:12px}
+  .channel-choice select{width:auto;flex:1}
+  .circle-draft-note{font-size:11px;color:#788077;margin:12px 0 0}
+  .stream-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .stream-heading h2{font-size:19px}
+  .stream-filters{display:flex;flex-wrap:wrap;gap:5px;border-bottom:1px solid #dfe4dd;padding-bottom:12px;margin-bottom:2px}
+  .feed-entry{display:flex;align-items:flex-start;gap:12px;padding:19px 0;border-bottom:1px solid #e1e6df}
+  .feed-avatar{flex:none}
+  .feed-body{min-width:0;flex:1}
+  .feed-heading{display:flex;align-items:baseline;gap:8px 13px;flex-wrap:wrap}
+  .feed-heading .author{font-size:14px}
+  .feed-detail{font-size:11px;color:#788078}
+  .feed-body p{font-size:15px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0}
+  .feed-remove{border:0;background:none;color:#657768;padding:6px 0 0;font-size:12px;text-decoration:underline}
+  .empty-feed{padding:24px 0}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:600px){.circle-editor{padding:14px}.circle-editor-bottom{align-items:flex-start}.entry-types{width:100%}}
   .circle-lead{font-size:15px;max-width:750px;color:#4c594f;line-height:1.7}
   .circle-list{display:flex;flex-direction:column;border-top:1px solid #dfe3dd;margin:22px 0}
   .circle-choice{width:100%;display:flex;align-items:center;gap:19px;text-align:left;background:transparent;border:0;border-bottom:1px solid #dfe3dd;padding:21px 4px;color:#263a2c}
