@@ -74,3 +74,9 @@ Deze frontendproef heeft geen echte uitnodigingen, lidmaatschappen of autorisati
 ## Kringstroom als gecombineerde presentatielaag
 
 De bestaande `Post`- en `Message`-objecten blijven voorlopig bestaan voor compatibiliteit met `onder-elkaar-demo-v1`. In `src/routes/+page.svelte` worden ze voor de actieve kring in een tijdelijke, getypeerde presentatiestroom gecombineerd en op tijd gesorteerd. Het kanaalfilter toont bij een specifiek onderwerp alleen gespreksberichten uit dat kanaal; `Alles` omvat ook vragen, aanbod en gedachten. Het schrijfvlak kiest op basis van het type tussen de bestaande `addMessage`- en `addPost`-route. Geen gegevensmigratie, geen ranking, geen backend.
+
+## Reacties, toestand en herkomst in de kringdemo
+
+`Post.kind` omvat nu ook `gesprek`; alle **nieuwe** kringbijdragen gebruiken het bestaande `Post`-model. `Post.state` is optioneel (`open`/`geregeld`) en alleen door de auteur in de browserinterface te wijzigen voor `vraag` of `aanbod`. `Post.originId` kan verwijzen naar een bestaande kringbijdrage (prefix `post-` of `message-`). `CircleReply` legt antwoorden vast als aparte objecten met `parentId`, zonder ze in de hoofdtijdlijn te plaatsen. De component `src/lib/CircleDiscussion.svelte` presenteert reacties en praktische toestand binnen de gecombineerde kringstroom.
+
+In `onder-elkaar-demo-v1` wordt daarvoor een optionele `replies`-array toegevoegd. Oudere opgeslagen data zonder `replies` krijgen fictieve voorbeeldreacties en historische `Message`-records blijven leesbaar als bijdrage. Er is geen backend, geen echte gebruikerstoestemming of productieautorisatie. De scheiding van kringgegevens wordt alleen in de browser gesimuleerd.
