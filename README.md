@@ -72,3 +72,9 @@ Open daarna http://localhost:8080. Een test van het backendproxy-pad is http://l
 De tab **Kringen** bevat nu drie fictieve verbanden: een schilderklasje en twee bands. Je kunt iedere kring openen en daar de eigen bijdragen en gesprekken lezen of lokale demobijdragen plaatsen. Oude schildergroepgesprekken blijven leesbaar. Vanuit de kring kan de bezoeker **Bekijk op kaart** kiezen: het schilderklasje heeft één denkbeeldige ontmoetingsplek, Band A twee denkbeeldige activiteiten en Band B nadrukkelijk **geen** kaartlocatie. Dat laatste is geen ontbrekend profielveld.
 
 Op de algemene buurtkaart verschijnen alleen buurtbijdragen, geen kringgebonden berichten als verzonnen geografische punten. Je eigen persoonlijke pagina verwijst naar de drie proefkringen. Alle lidmaatschappen, bijdragen en locaties zijn uitsluitend fictieve frontendvoorbeelden. Er is **geen** echte kringautorisatie, geen automatisch tonen van ledenlocaties en geen werkend account.
+
+## Natuurlijker verloop binnen kringen
+
+De kringpagina toont nu één doorlopende stroom met vragen, aanbod, gedachten en gesprekken in chronologische volgorde. Het schrijfvlak staat vooraan: kies daar of je een gesprek begint, een vraag stelt, iets aanbiedt of een gedachte deelt. Voor gesprekken kun je desgewenst een onderwerp/kanaal kiezen. Via subtiele filters zijn losse gespreksonderwerpen terug te vinden; `Alles` toont de hele kringstroom. De kaart met fictieve activiteiten blijft bereikbaar via `Plekken en activiteiten` maar onderbreekt niet langer de kringconversatie.
+
+Bestaande demobijdragen en schildergroepberichten blijven behouden. Nieuwe bijdragen blijven lokale browserdemo-data en zijn geen werkelijk afgeschermde groepscommunicatie.
