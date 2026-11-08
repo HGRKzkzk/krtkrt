@@ -70,3 +70,7 @@ Voor de pilot volgt nog: migratieschema, uitnodigings- en registratieflow, gebru
 `src/routes/+page.svelte` toont een kringenoverzicht, actieve kring met bijdragen en kanaalgesprekken, en een omschakeling naar de contextkaart. Nieuwe demo-berichten bewaren optioneel `circle`; historische berichten zonder die eigenschap blijven in de schildergroep zichtbaar. De bestaande opslag onder `onder-elkaar-demo-v1` blijft behouden. De algemene buurtkaart filtert voortaan op `visibility === 'buurt'`; kringinterne berichten krijgen **geen** willekeurige kaartpositie. De kaartcoördinaten van de nieuwe activiteiten zijn uitsluitend verzonnen demo-voorbeelden en mogen niet voor echte optredens of afspraken worden aangezien.
 
 Deze frontendproef heeft geen echte uitnodigingen, lidmaatschappen of autorisatie. 'Alle drie de kringen' is alleen een demo-aanname, geen accountmodel of toegangsbesluit.
+
+## Kringstroom als gecombineerde presentatielaag
+
+De bestaande `Post`- en `Message`-objecten blijven voorlopig bestaan voor compatibiliteit met `onder-elkaar-demo-v1`. In `src/routes/+page.svelte` worden ze voor de actieve kring in een tijdelijke, getypeerde presentatiestroom gecombineerd en op tijd gesorteerd. Het kanaalfilter toont bij een specifiek onderwerp alleen gespreksberichten uit dat kanaal; `Alles` omvat ook vragen, aanbod en gedachten. Het schrijfvlak kiest op basis van het type tussen de bestaande `addMessage`- en `addPost`-route. Geen gegevensmigratie, geen ranking, geen backend.
