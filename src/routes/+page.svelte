@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import MapView from '$lib/MapView.svelte';
   import CircleMap from '$lib/CircleMap.svelte';
+  import CircleDiscussion from '$lib/CircleDiscussion.svelte';
   import { demoCircles, circleById } from '$lib/demoCircles';
   import type { CircleId } from '$lib/demoCircles';
   import PersonalPlaceView from '$lib/PersonalPlace.svelte';
@@ -9,8 +10,8 @@
   import { demoNeighbours, demoNeighbourPlace } from '$lib/demoNeighbours';
   import { emptyPlace, fromLegacy, cleanPlace } from '$lib/personalPlace';
   import type { PersonalPlace } from '$lib/personalPlace';
-  import { demoPosts, demoMessages, demoConnections } from '$lib/demo';
-  import type { Post, Message, Connection, Kind } from '$lib/types';
+  import { demoPosts, demoMessages, demoConnections, demoReplies } from '$lib/demo';
+  import type { Post, Message, Connection, Kind, CircleReply } from '$lib/types';
 
   type Tab = 'kaart' | 'kringen' | 'profiel';
   type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
@@ -19,6 +20,7 @@
   let selectedPerson: string | null = null;
   let posts: Post[] = [...demoPosts];
   let messages: Message[] = [...demoMessages];
+  let replies: CircleReply[] = [...demoReplies];
   // Preserve historical notes written in older demo versions; no route editor.
   let connections: Connection[] = [...demoConnections];
   let myProfile: Profile = { bio: '', appreciates: '', dislikes: '', links: '' };
@@ -28,7 +30,8 @@
   let activeCircleId: CircleId | null = null;
   let showCircleMap = false;
   let circleFilter = 'alles';
-  let circleDraftKind: 'gesprek' | Kind = 'gesprek';
+  let circleDraftKind: Kind = 'gesprek';
+  let startingFrom: string | null = null;
   let showComposer = false;
   let editingProfile = false;
   let postText = '';
@@ -71,6 +74,7 @@
         const data = JSON.parse(raw);
         posts = Array.isArray(data.posts) ? data.posts : [...demoPosts];
         messages = Array.isArray(data.messages) ? data.messages : [...demoMessages];
+        replies = Array.isArray(data.replies) ? data.replies : [...demoReplies];
         connections = Array.isArray(data.connections) ? data.connections : [...demoConnections];
         screenName = typeof data.screenName === 'string' ? data.screenName : 'Gast';
         if (data.myProfile && typeof data.myProfile === 'object') {
@@ -91,7 +95,7 @@
   function persist() {
     if (!stored) return;
     try {
-      localStorage.setItem(key, JSON.stringify({ posts, messages, connections, screenName, myProfile, personalPlace }));
+      localStorage.setItem(key, JSON.stringify({ posts, messages, replies, connections, screenName, myProfile, personalPlace }));
     } catch {
       notice = 'Opslaan in deze browser lukt niet.';
     }
@@ -107,12 +111,14 @@
     circleFilter = 'alles';
     circleDraftKind = 'gesprek';
     messageText = '';
+    startingFrom = null;
     showCircleMap = false;
     showComposer = false;
     tab = 'kringen';
   }
   function circlesOverview() {
     activeCircleId = null;
+    startingFrom = null;
     circleFilter = 'alles';
     showCircleMap = false;
     showComposer = false;
@@ -145,18 +151,42 @@
     persist();
   }
   function publishCircleEntry() {
-    if (!activeCircle) return;
-    if (circleDraftKind === 'gesprek') {
-      if (!messageText.trim()) return;
-      addMessage();
-    } else {
-      if (!messageText.trim()) return;
-      postKind = circleDraftKind;
-      postText = messageText;
-      addPost();
-      messageText = '';
-    }
+    if (!activeCircle || !messageText.trim()) return;
+    const post: Post = {
+      id:crypto.randomUUID(), author:screenName.trim() || 'Gast', kind:circleDraftKind,
+      text:messageText.trim(), visibility:'kring', circle:activeCircle.name,
+      createdAt:Date.now(), ...(startingFrom ? {originId:startingFrom} : {})
+    };
+    posts = [post,...posts];
+    messageText = '';
+    startingFrom = null;
+    circleDraftKind = 'gesprek';
     circleFilter = 'alles';
+    persist();
+  }
+  function addCircleReply(parentId:string,text:string) {
+    if (!activeCircle || !text.trim() || !circleFeed.some((entry)=>entry.id===parentId)) return;
+    replies = [...replies, {id:crypto.randomUUID(),parentId,author:screenName.trim()||'Gast',text:text.trim(),createdAt:Date.now()}];
+    persist();
+  }
+  function setCircleState(postId:string,state:'open'|'geregeld'|undefined) {
+    posts = posts.map(post=>post.id===postId && post.author===screenName && (post.kind==='vraag'||post.kind==='aanbod')
+      ? {...post,state} : post);
+    persist();
+  }
+  function startFrom(parentId:string) {
+    startingFrom=parentId;
+    messageText='';
+    circleDraftKind='gesprek';
+    circleFilter='alles';
+    document.getElementById('circle-entry')?.focus();
+  }
+  function deleteCirclePost(id:string) {
+    const match=posts.find(post=>post.id===id);
+    if (!match || match.demo || match.author!==screenName) return;
+    posts=posts.filter(post=>post.id!==id);
+    replies=replies.filter(reply=>reply.parentId!=='post-'+id);
+    persist();
   }
   function removePost(id: string) {
     posts = posts.filter((p) => p.id !== id);
@@ -167,6 +197,7 @@
     if (!confirm('Je eigen demo-inhoud wissen en de voorbeelden herstellen?')) return;
     posts = [...demoPosts];
     messages = [...demoMessages];
+    replies = [...demoReplies];
     connections = [...demoConnections];
     myProfile = { bio: '', appreciates: '', dislikes: '', links: '' };
     personalPlace = emptyPlace();
@@ -174,6 +205,7 @@
     selectedPerson = null;
     selectedPostId = 'p1';
     showComposer = false;
+    startingFrom = null;
     editingProfile = false;
     tab = 'kaart';
     activeCircleId = null;
@@ -304,6 +336,11 @@
                 <div><strong>{screenName || 'Gast'}</strong><span>Wat wil je met deze kring delen?</span></div>
               </div>
               <form onsubmit={(event) => {event.preventDefault(); publishCircleEntry();}}>
+                {#if startingFrom}
+                  <div class="origin-note">Nieuwe bijdrage vanuit een eerder gesprek
+                    <button type="button" onclick={() => startingFrom=null} aria-label="Verwijder verwijzing">×</button>
+                  </div>
+                {/if}
                 <label class="visually-hidden" for="circle-entry">Schrijf iets voor deze kring</label>
                 <textarea id="circle-entry" bind:value={messageText} rows="3" maxlength="600" required
                   placeholder={circleDraftKind === 'gesprek' ? 'Een vraag, observatie of iets om samen over te praten…' : 'Wat wil je ' + (circleDraftKind === 'vraag' ? 'vragen' : circleDraftKind === 'aanbod' ? 'aanbieden' : 'delen') + '?'}></textarea>
@@ -313,18 +350,11 @@
                     {#each [{id:'gesprek',label:'Gesprek'},{id:'vraag',label:'Vraag'},{id:'aanbod',label:'Aanbod'},{id:'gedachte',label:'Gedachte'}] as type}
                       <button type="button" class:chosen={circleDraftKind===type.id}
                         aria-pressed={circleDraftKind===type.id}
-                        onclick={() => circleDraftKind=type.id as 'gesprek' | Kind}>{type.label}</button>
+                        onclick={() => circleDraftKind=type.id as Kind}>{type.label}</button>
                     {/each}
                   </fieldset>
                   <button type="submit" class="solid-button" disabled={!messageText.trim()}>Delen</button>
                 </div>
-                {#if circleDraftKind === 'gesprek' && activeCircle.channels.length > 1}
-                  <div class="channel-choice"><label for="circle-channel">Onderwerp</label>
-                    <select id="circle-channel" bind:value={channel}>
-                      {#each activeCircle.channels as option}<option value={option}># {option}</option>{/each}
-                    </select>
-                  </div>
-                {/if}
                 <p class="circle-draft-note">Alleen in deze fictieve kringweergave; er zijn nog geen echte toegangsrechten.</p>
               </form>
             </section>
@@ -337,24 +367,14 @@
                   <button class:selected={circleFilter === option} aria-pressed={circleFilter === option} onclick={() => circleFilter=option}># {option}</button>
                 {/each}
               </div>
-              {#if circleFeed.length === 0}
-                <p class="muted empty-feed">Nog niets in dit onderdeel. Je kunt hierboven zelf iets beginnen.</p>
-              {/if}
-              {#each circleFeed as entry (entry.id)}
-                <article class="feed-entry">
-                  <div class="feed-avatar"><Avatar name={entry.author} image={entry.author === screenName ? (personalPlace.avatar || '') : ''}/></div>
-                  <div class="feed-body">
-                    <div class="feed-heading">
-                      <button class="author" onclick={() => openPerson(entry.author)}>{entry.author}</button>
-                      <span class="feed-detail">{entry.kind === 'post' ? entry.label : '# ' + entry.channel} · {when(entry.timestamp)}</span>
-                    </div>
-                    <p>{entry.text}</p>
-                    {#if entry.kind === 'post' && !entry.post.demo && entry.author === screenName}
-                      <button class="feed-remove" onclick={() => removePost(entry.post.id)}>Verwijderen</button>
-                    {/if}
-                  </div>
-                </article>
-              {/each}
+              <CircleDiscussion
+                posts={circlePosts}
+                messages={messages.filter((m) => m.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !m.circle))}
+                {replies} filter={circleFilter}
+                circleName={activeCircle.name} {screenName} ownAvatar={personalPlace.avatar || ''}
+                onReply={addCircleReply} onStatus={setCircleState} onBranch={startFrom}
+                onDelete={deleteCirclePost} onPerson={openPerson}
+              />
             </section>
           </div>
           <section class="circle-members">
@@ -478,6 +498,8 @@
   .profile-field p{white-space:pre-wrap;overflow-wrap:anywhere}
   .outbound{overflow-wrap:anywhere}
   .profile-form{padding:0 0 30px;border:0;max-width:620px}
+  .origin-note{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#e9efe9;padding:8px 11px;margin-bottom:10px;font-size:12px;color:#3d5845}
+  .origin-note button{border:0;background:none;color:inherit;font-size:20px}
   .circle-flow{max-width:760px}
   .circle-editor{padding:18px 20px 15px;border:1px solid #dce2db;background:#f6f8f4;margin:14px 0 38px}
   .circle-editor-identity{display:flex;align-items:center;gap:12px;margin-bottom:12px}
