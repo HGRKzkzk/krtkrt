@@ -82,3 +82,9 @@ De oorspronkelijke auteur kan bij een **vraag of aanbod** vrijwillig aangeven of
 De vorige proef liet voor iedere bijdrage een rij vaste keuzes ('Gesprek', 'Vraag', 'Aanbod', 'Gedachte') zien. Hoewel technisch één model, werkte dat sociaal alsnog voorschrijvend. De kringpagina begint daarom met **vrij schrijven**; alleen als het helpt geeft de deelnemer achteraf of tijdens het schrijven een vrijwillige aanduiding. Een bijdrage zonder aanduiding is niet minder volledig en krijgt geen standaardetiket 'gesprek'.
 
 Een reactie is visueel steeds onderdeel van de oorspronkelijke draad, **inclusief het reactieveld voordat het eerste antwoord bestaat**. Dat geldt voor een eigen nieuwe bijdrage net zo goed als voor fictieve oudere bijdragen. De eerdere kanaalfilters worden niet meer als afzonderlijke sociale ordening boven de stroom gepresenteerd; gesprekken, oproepen en reacties vormen samen de plek.
+
+## Stille interpretatie, geen gedwongen richting
+
+In de conceptdemo wordt een **afzonderlijke, voorlopig heuristische laag** onderzocht: de inhoud van een kringbijdrage en de directe reacties kan mogelijke richtingen suggereren (praktische vraag, uitwisseling, gezamenlijk idee, verkenning). Meerdere richtingen mogen naast elkaar bestaan; geen enkele is een vastgestelde waarheid, identiteitsscore of norm voor wat het gesprek behoort te worden.
+
+Het model kent een **zesuurs-herbeoordelingsritme**, uitsluitend na nieuwe inhoud en zodra de browser wordt gebruikt. Deelnemers hoeven niets te categoriseren; de interpretatie verandert hun bijdrage, reactie, praktische status, zichtbaarheid, volgorde of kringrechten niet. De duiding is alleen via een expliciet geopende **proefinspectie** zichtbaar voor de ontwikkelaar/bezoeker van de lokale demo; geen geautomatiseerde suggesties aan deelnemers. Eerst onderzoeken of het betekenisvol werkt voordat we een sociale interventie overwegen.
