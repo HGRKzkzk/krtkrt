@@ -348,16 +348,18 @@
                 {/if}
                 <label class="visually-hidden" for="circle-entry">Schrijf iets voor deze kring</label>
                 <textarea id="circle-entry" bind:value={messageText} rows="3" maxlength="600" required
-                  placeholder={circleDraftKind === 'gesprek' ? 'Een vraag, observatie of iets om samen over te praten…' : 'Wat wil je ' + (circleDraftKind === 'vraag' ? 'vragen' : circleDraftKind === 'aanbod' ? 'aanbieden' : 'delen') + '?'}></textarea>
+                  placeholder="Waar wil je het over hebben, wat wil je vragen of delen?"></textarea>
                 <div class="circle-editor-bottom">
-                  <fieldset class="entry-types">
-                    <legend>Soort bijdrage</legend>
-                    {#each [{id:'gesprek',label:'Gesprek'},{id:'vraag',label:'Vraag'},{id:'aanbod',label:'Aanbod'},{id:'gedachte',label:'Gedachte'}] as type}
-                      <button type="button" class:chosen={circleDraftKind===type.id}
-                        aria-pressed={circleDraftKind===type.id}
-                        onclick={() => circleDraftKind=type.id as Kind}>{type.label}</button>
-                    {/each}
-                  </fieldset>
+                  <details class="entry-options">
+                    <summary>{circleDraftKind === 'gesprek' ? 'Eventueel aanduiden' : circleDraftKind === 'vraag' ? 'Vraag · aanpassen' : circleDraftKind === 'aanbod' ? 'Aanbod · aanpassen' : 'Gedachte · aanpassen'}</summary>
+                    <label for="circle-kind">Als een aanduiding helpt</label>
+                    <select id="circle-kind" bind:value={circleDraftKind}>
+                      <option value="gesprek">Geen aanduiding</option>
+                      <option value="vraag">Vraag</option>
+                      <option value="aanbod">Aanbod</option>
+                      <option value="gedachte">Gedachte</option>
+                    </select>
+                  </details>
                   <button type="submit" class="solid-button" disabled={!messageText.trim()}>Delen</button>
                 </div>
                 <p class="circle-draft-note">Alleen in deze fictieve kringweergave; er zijn nog geen echte toegangsrechten.</p>
@@ -513,10 +515,12 @@
   .circle-editor-identity span{font-size:12px;color:#68746a}
   .circle-editor textarea{width:100%;min-height:96px;background:#fff;resize:vertical;border:1px solid #c8d4c8}
   .circle-editor-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
-  .entry-types{border:0;padding:0;margin:0;display:flex;gap:5px;flex-wrap:wrap}
-  .entry-types legend{font-size:12px;color:#56685b;margin-bottom:4px}
-  .entry-types button,.stream-filters button{background:transparent;border:1px solid transparent;border-radius:3px;padding:5px 9px;color:#536555}
-  .entry-types button.chosen,.stream-filters button.selected{background:#e4ebe2;color:#274732;border-color:#cbdacb}
+  .entry-options{color:#566d59;font-size:12px}
+  .entry-options summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0;list-style-position:inside}
+  .entry-options label{display:block;margin-top:8px}
+  .entry-options select{margin-top:5px;max-width:240px}
+  .stream-filters button{background:transparent;border:1px solid transparent;border-radius:3px;padding:5px 9px;color:#536555}
+  .stream-filters button.selected{background:#e4ebe2;color:#274732;border-color:#cbdacb}
   .circle-editor-bottom .solid-button:disabled{opacity:.5;cursor:default}
   .channel-choice{display:flex;align-items:center;gap:12px;max-width:340px;margin-top:12px}
   .channel-choice select{width:auto;flex:1}
