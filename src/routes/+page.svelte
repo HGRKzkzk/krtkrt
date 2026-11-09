@@ -367,17 +367,10 @@
             </section>
 
             <section class="circle-stream" aria-label="Wat er in deze kring gebeurt">
-              <div class="stream-heading"><h2>In de kring</h2><span class="muted">{circleFeed.length} {circleFeed.length === 1 ? 'bijdrage' : 'bijdragen'}</span></div>
-              <div class="stream-filters" aria-label="Filter op gespreksonderwerp">
-                <button class:selected={circleFilter === 'alles'} aria-pressed={circleFilter === 'alles'} onclick={() => circleFilter='alles'}>Alles</button>
-                {#each activeCircle.channels as option}
-                  <button class:selected={circleFilter === option} aria-pressed={circleFilter === option} onclick={() => circleFilter=option}># {option}</button>
-                {/each}
-              </div>
               <CircleDiscussion
                 posts={circlePosts}
                 messages={messages.filter((m) => m.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !m.circle))}
-                {replies} filter={circleFilter}
+                {replies} filter="alles"
                 circleName={activeCircle.name} {screenName} ownAvatar={personalPlace.avatar || ''}
                 onReply={addCircleReply} onStatus={setCircleState} onBranch={startFrom}
                 onDelete={deleteCirclePost} onPerson={openPerson} onOrigin={goToOrigin}
