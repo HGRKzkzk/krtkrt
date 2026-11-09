@@ -84,3 +84,7 @@ Bestaande demobijdragen en schildergroepberichten blijven behouden. Nieuwe bijdr
 Een nieuwe bijdrage in een kring is nu één basisvorm, met een optioneel karakter (gesprek, vraag, aanbod of gedachte). Iedere bijdrage kan **rechtstreeks reacties** krijgen. Antwoorden verschijnen onder de oorspronkelijke bijdrage, niet als losse items in de kringstroom. Bij praktische vragen of aanbod kan de **eigen auteur** desgewenst aangeven of die nog openstaan of inmiddels geregeld zijn, zonder de reacties te sluiten. Vanuit een bestaande bijdrage kan iemand een **nieuw idee** beginnen, met een verwijzing naar het eerdere gesprek.
 
 Oude schildergroepberichten blijven leesbaar naast nieuwe bijdragen. De nieuwe reacties worden uitsluitend in de lokale browserdemo opgeslagen, niet gedeeld met echte andere gebruikers. Herstel voorbeelden wist ook nieuwe lokale reacties.
+
+## Schrijven en antwoorden zonder verplichte indeling
+
+In de kring begint iemand nu direct met schrijven. Een bijdrage hoeft **niet** vooraf als 'gesprek', 'vraag', 'aanbod' of 'gedachte' te worden gekozen; een aanduiding kan optioneel worden toegevoegd via **Eventueel aanduiden**. Berichten zonder aanduiding krijgen geen zichtbaar soortlabel. Oude kanaalfilters en dubbele tussenkoppen zijn uit de kringstroom verdwenen, maar bestaande berichten en hun kanaalnamen blijven leesbaar. Bij **Reageren** verschijnt ook het invoerveld direct in de inspringende gespreksdraad, zelfs als er nog geen reacties zijn. De oorspronkelijke bijdrage blijft op het hoofdniveau, de antwoorden staan eronder.
