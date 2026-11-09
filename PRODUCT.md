@@ -76,3 +76,9 @@ De contextuele kaart blijft een optionele tweede kijkwijze onder `Plekken en act
 Een bijdrage is het vertrekpunt voor interactie, geen vastgelegde gespreksvorm. Vragen, aanbod, gedachten en gesprekken gebruiken dezelfde basisvorm en kunnen allemaal reacties krijgen. De reactie blijft bij de oorspronkelijke bijdrage. Een vraag hoeft niet als gesprek te worden 'omgezet' en veel reacties geven geen hogere algoritmische rangschikking. De kringstroom blijft chronologisch naar oorspronkelijke plaatsing geordend.
 
 De oorspronkelijke auteur kan bij een **vraag of aanbod** vrijwillig aangeven of deze nog actueel is of geregeld. Dat verandert **alleen de praktische toestand** en sluit het gesprek niet. Wie vanuit een reactie een zelfstandig initiatief wil starten, kan een nieuwe bijdrage maken met een verwijzing naar de eerdere bijdrage; het oude gesprek blijft behouden. Deze verwantschap is beschrijvend, geen voorgeschreven proces of automatische promotie.
+
+## Schrijven vóór categoriseren
+
+De vorige proef liet voor iedere bijdrage een rij vaste keuzes ('Gesprek', 'Vraag', 'Aanbod', 'Gedachte') zien. Hoewel technisch één model, werkte dat sociaal alsnog voorschrijvend. De kringpagina begint daarom met **vrij schrijven**; alleen als het helpt geeft de deelnemer achteraf of tijdens het schrijven een vrijwillige aanduiding. Een bijdrage zonder aanduiding is niet minder volledig en krijgt geen standaardetiket 'gesprek'.
+
+Een reactie is visueel steeds onderdeel van de oorspronkelijke draad, **inclusief het reactieveld voordat het eerste antwoord bestaat**. Dat geldt voor een eigen nieuwe bijdrage net zo goed als voor fictieve oudere bijdragen. De eerdere kanaalfilters worden niet meer als afzonderlijke sociale ordening boven de stroom gepresenteerd; gesprekken, oproepen en reacties vormen samen de plek.
