@@ -54,7 +54,7 @@
       <div class="body">
         <div class="heading">
           <button class="author" onclick={() => onPerson(item.author)}>{item.author}</button>
-          <span class="meta">{item.channel ? '# '+item.channel : item.label} · {when(item.createdAt)}</span>
+          <span class="meta">{item.channel ? '# '+item.channel+' · ' : item.label !== 'gesprek' ? item.label+' · ' : ''}{when(item.createdAt)}</span>
         </div>
         <p class="entry-text">{item.text}</p>
         {#if item.post?.originId}
@@ -78,8 +78,17 @@
             {/if}
           </div>
         {/if}
-        {#if replyCount(item.id)>0}
-          <div class="replies">
+        <div class="entry-actions">
+          <button onclick={() => {replyTo=replyTo===item.id?null:item.id;draft='';}}>
+            {replyTo===item.id?'Annuleren':replyCount(item.id)?'Reageren · '+replyCount(item.id):'Reageren'}
+          </button>
+          <button onclick={() => onBranch(item.id)}>Hieruit iets nieuws beginnen</button>
+          {#if item.post && item.post.author===screenName && !item.post.demo}
+            <button onclick={() => onDelete(item.post!.id)}>Verwijderen</button>
+          {/if}
+        </div>
+        {#if replyCount(item.id)>0 || replyTo===item.id}
+          <div class="replies" aria-label={'Reacties op ' + item.author}>
             {#each replies.filter(reply=>reply.parentId===item.id).sort((a,b)=>a.createdAt-b.createdAt) as reply (reply.id)}
               <div class="reply">
                 <Avatar name={reply.author} image={reply.author===screenName?ownAvatar:''}/>
@@ -90,23 +99,14 @@
                 </div>
               </div>
             {/each}
+            {#if replyTo===item.id}
+              <form class="reply-form" onsubmit={(event)=>{event.preventDefault();sendReply(item.id);}}>
+                <label for={'reply-'+item.id}>Jouw reactie op {item.author}</label>
+                <textarea id={'reply-'+item.id} rows="2" maxlength="600" required bind:value={draft} placeholder="Schrijf een reactie…"></textarea>
+                <button type="submit" disabled={!draft.trim()}>Reageren</button>
+              </form>
+            {/if}
           </div>
-        {/if}
-        <div class="actions">
-          <button onclick={() => {replyTo=replyTo===item.id?null:item.id;draft='';}}>
-            {replyTo===item.id?'Annuleren':replyCount(item.id)?'Reageren · '+replyCount(item.id):'Reageren'}
-          </button>
-          <button onclick={() => onBranch(item.id)}>Nieuw idee vanuit dit gesprek</button>
-          {#if item.post && item.post.author===screenName && !item.post.demo}
-            <button onclick={() => onDelete(item.post!.id)}>Verwijderen</button>
-          {/if}
-        </div>
-        {#if replyTo===item.id}
-          <form class="reply-form" onsubmit={(event)=>{event.preventDefault();sendReply(item.id);}}>
-            <label for={'reply-'+item.id}>Reageer op {item.author}</label>
-            <textarea id={'reply-'+item.id} rows="2" maxlength="600" required bind:value={draft} placeholder="Schrijf een reactie…"></textarea>
-            <button type="submit" disabled={!draft.trim()}>Reageren</button>
-          </form>
         {/if}
       </div>
     </article>
@@ -131,9 +131,9 @@
   .replies{border-left:2px solid #dce6db;margin:14px 0 0;padding-left:13px}
   .reply{display:flex;align-items:flex-start;gap:9px;padding:9px 0}
   .reply p{font-size:13px;line-height:1.55;margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
-  .actions{display:flex;gap:16px;flex-wrap:wrap;margin-top:11px}
-  .actions button{border:0;padding:0;background:none;color:#39624a;text-decoration:underline;text-underline-offset:3px;font-size:12px}
-  .reply-form{margin-top:14px;display:flex;align-items:flex-start;flex-direction:column;gap:7px}
+  .entry-actions{display:flex;gap:16px;flex-wrap:wrap;margin-top:11px}
+  .entry-actions button{border:0;padding:0;background:none;color:#39624a;text-decoration:underline;text-underline-offset:3px;font-size:12px}
+  .reply-form{margin-top:12px;display:flex;align-items:flex-start;flex-direction:column;gap:7px}
   .reply-form label{font-size:12px;color:#56665a}
   .reply-form textarea{width:100%;padding:9px;border:1px solid #c9d4c9;font:inherit}
   .reply-form button{padding:8px 14px;background:#294434;color:#fff;border:0}
