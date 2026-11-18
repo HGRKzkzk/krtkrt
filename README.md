@@ -88,3 +88,9 @@ Oude schildergroepberichten blijven leesbaar naast nieuwe bijdragen. De nieuwe r
 ## Schrijven en antwoorden zonder verplichte indeling
 
 In de kring begint iemand nu direct met schrijven. Een bijdrage hoeft **niet** vooraf als 'gesprek', 'vraag', 'aanbod' of 'gedachte' te worden gekozen; een aanduiding kan optioneel worden toegevoegd via **Eventueel aanduiden**. Berichten zonder aanduiding krijgen geen zichtbaar soortlabel. Oude kanaalfilters en dubbele tussenkoppen zijn uit de kringstroom verdwenen, maar bestaande berichten en hun kanaalnamen blijven leesbaar. Bij **Reageren** verschijnt ook het invoerveld direct in de inspringende gespreksdraad, zelfs als er nog geen reacties zijn. De oorspronkelijke bijdrage blijft op het hoofdniveau, de antwoorden staan eronder.
+
+## Stille proefduiding (zes uur)
+
+De browserdemo experimenteert met een **voorlopige interpretatielaag** die kijkt of een kringbijdrage en eventuele reacties mogelijk richting een praktische vraag, uitwisseling, gezamenlijk voorstel of verkennend gesprek bewegen. Een eerste beoordeling gebeurt wanneer de demo wordt geopend. Nieuwe reacties zijn direct zichtbaar; een herbeoordeling vindt pas plaats als er **minimaal zes uur** sinds de vorige beoordeling voorbij is, de inhoud van de draad is gewijzigd én de browser weer wordt gebruikt of geopend. Dit is dus **geen achtergrondtaak**.
+
+De uitkomst wordt uitsluitend lokaal opgeslagen onder dezelfde demosleutel en is te bekijken via het bescheiden uitklapgedeelte **Proefduiding bekijken** binnen een kring. Er worden geen gespreksteksten of namen gekopieerd naar dit interpretatieoverzicht, geen externe modeldienst aangeroepen, en niets wordt automatisch omgezet, gesloten, gedeeld, gerangschikt of gemeld. Het is nadrukkelijk **geen betrouwbare AI-analyse**: eenvoudige, controleerbare trefwoorden kunnen de betekenis missen en worden niet als oordeel aan deelnemers getoond.

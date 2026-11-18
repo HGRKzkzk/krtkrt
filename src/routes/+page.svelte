@@ -12,6 +12,8 @@
   import type { PersonalPlace } from '$lib/personalPlace';
   import { demoPosts, demoMessages, demoConnections, demoReplies } from '$lib/demo';
   import type { Post, Message, Connection, Kind, CircleReply } from '$lib/types';
+  import { reviewDueThreads, readInterpretations, REVIEW_INTERVAL_MS } from '$lib/circleInterpretation';
+  import type { Interpretation } from '$lib/circleInterpretation';
 
   type Tab = 'kaart' | 'kringen' | 'profiel';
   type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
@@ -21,6 +23,7 @@
   let posts: Post[] = [...demoPosts];
   let messages: Message[] = [...demoMessages];
   let replies: CircleReply[] = [...demoReplies];
+  let interpretations: Interpretation[] = [];
   // Preserve historical notes written in older demo versions; no route editor.
   let connections: Connection[] = [...demoConnections];
   let myProfile: Profile = { bio: '', appreciates: '', dislikes: '', links: '' };
@@ -52,6 +55,11 @@
   $: activeCircle = activeCircleId ? circleById(activeCircleId) : null;
   $: circlePosts = activeCircle ? posts.filter((p) => p.circle === activeCircle.name || (activeCircle.id === 'schildergroep' && p.circle === 'Schildergroep')) : [];
   $: mapPosts = posts.filter((p) => p.visibility === 'buurt');
+  $: circleAssessments = activeCircle ? interpretations.filter(item =>
+    circlePosts.some(post=>'post-'+post.id===item.threadId) ||
+    messages.some(message=>(message.circle===activeCircle?.name ||
+      (activeCircle?.id==='schildergroep' && !message.circle)) && 'message-'+message.id===item.threadId)
+  ) : [];
   $: circleFeed = activeCircle ? [
     ...circlePosts.map((post) => ({id:'post-'+post.id, kind:'post' as const, author:post.author, text:post.text, timestamp:post.createdAt, label:post.kind, channel:'', post})),
     ...messages.filter((message) => message.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !message.circle))
@@ -75,6 +83,7 @@
         posts = Array.isArray(data.posts) ? data.posts : [...demoPosts];
         messages = Array.isArray(data.messages) ? data.messages : [...demoMessages];
         replies = Array.isArray(data.replies) ? data.replies : [...demoReplies];
+        interpretations = readInterpretations(data.interpretations);
         connections = Array.isArray(data.connections) ? data.connections : [...demoConnections];
         screenName = typeof data.screenName === 'string' ? data.screenName : 'Gast';
         if (data.myProfile && typeof data.myProfile === 'object') {
@@ -91,14 +100,32 @@
       notice = 'De opgeslagen demo kon niet worden geladen.';
     }
     stored = true;
+    reviewInterpretations();
+    const checkOnReturn = () => {if (document.visibilityState==='visible') reviewInterpretations();};
+    document.addEventListener('visibilitychange',checkOnReturn);
+    return () => document.removeEventListener('visibilitychange',checkOnReturn);
   });
+  function reviewInterpretations() {
+    if (!stored) return;
+    const updated = reviewDueThreads(posts,messages,replies,interpretations,Date.now());
+    // Compare revisions and timestamps, not array references: avoid writing
+    // on every unrelated profile action.
+    if (updated.length!==interpretations.length ||
+      updated.some((item,i)=>item.threadId!==interpretations[i]?.threadId ||
+        item.revision!==interpretations[i]?.revision || item.reviewedAt!==interpretations[i]?.reviewedAt)) {
+      interpretations=updated;
+      try {localStorage.setItem(key,JSON.stringify({posts,messages,replies,interpretations,connections,screenName,myProfile,personalPlace}));}
+      catch {notice='De lokale interpretaties konden niet worden bewaard.';}
+    }
+  }
   function persist() {
     if (!stored) return;
     try {
-      localStorage.setItem(key, JSON.stringify({ posts, messages, replies, connections, screenName, myProfile, personalPlace }));
+      localStorage.setItem(key, JSON.stringify({ posts, messages, replies, interpretations, connections, screenName, myProfile, personalPlace }));
     } catch {
       notice = 'Opslaan in deze browser lukt niet.';
     }
+    reviewInterpretations();
   }
   function openPerson(name: string) {
     selectedPerson = name === screenName ? null : name;
@@ -203,6 +230,7 @@
     posts = [...demoPosts];
     messages = [...demoMessages];
     replies = [...demoReplies];
+    interpretations = [];
     connections = [...demoConnections];
     myProfile = { bio: '', appreciates: '', dislikes: '', links: '' };
     personalPlace = emptyPlace();
@@ -377,6 +405,22 @@
               />
             </section>
           </div>
+          <details class="circle-review-debug">
+            <summary>Proefduiding bekijken <span class="muted">(alleen in deze browser)</span></summary>
+            <p>Voorlopige, eenvoudige trefwoordsignalen; geen AI-oordeel. De bijdrage verandert niet, krijgt geen score en verschuift niet in de stroom. Een eerste lezing gebeurt bij openen; nieuwe reacties worden pas na minimaal zes uur sinds de vorige beoordeling meegenomen, wanneer je de app opnieuw gebruikt.</p>
+            {#if circleAssessments.length === 0}
+              <p class="muted">Nog geen beoordelingen beschikbaar.</p>
+            {:else}
+              {#each circleAssessments as assessment (assessment.threadId)}
+                <div class="review-entry">
+                  <span class="review-ref">{assessment.threadId.startsWith('post-') ? 'Bijdrage' : 'Ouder gesprek'} · {new Date(assessment.reviewedAt).toLocaleString('nl-NL')}</span>
+                  <span>{assessment.directions.length ? assessment.directions.map(d => d==='praktische-vraag'?'mogelijk een vraag':d==='uitwisseling'?'mogelijk uitwisseling':d==='gezamenlijk-idee'?'mogelijk gezamenlijk idee':'verkennend gesprek').join(' · ') : 'nog geen duidelijke richting'}</span>
+                  <small>{assessment.evidence.join('; ')}</small>
+                </div>
+              {/each}
+            {/if}
+            <p class="muted">Interval: {REVIEW_INTERVAL_MS / 3600000} uur. Nieuwe inhoud wordt direct zichtbaar, maar niet direct opnieuw geïnterpreteerd.</p>
+          </details>
           <section class="circle-members">
             <h2>Bij deze kring (voorbeeld)</h2>
             <p class="muted">Lidmaatschap zegt niets over de woonplek van deze mensen.</p>
@@ -500,6 +544,11 @@
   .profile-form{padding:0 0 30px;border:0;max-width:620px}
   .origin-note{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#e9efe9;padding:8px 11px;margin-bottom:10px;font-size:12px;color:#3d5845}
   .origin-note button{border:0;background:none;color:inherit;font-size:20px}
+  .circle-review-debug{max-width:760px;border-top:1px solid #dfe5dd;padding:14px 0;margin-top:38px;color:#576859;font-size:12px}
+  .circle-review-debug summary{cursor:pointer;color:#4d6654}
+  .circle-review-debug>p{max-width:680px}
+  .review-entry{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid #e5e9e4}
+  .review-ref,.review-entry small{color:#768078}
   .circle-flow{max-width:760px}
   .circle-editor{padding:18px 20px 15px;border:1px solid #dce2db;background:#f6f8f4;margin:14px 0 38px}
   .circle-editor-identity{display:flex;align-items:center;gap:12px;margin-bottom:12px}
