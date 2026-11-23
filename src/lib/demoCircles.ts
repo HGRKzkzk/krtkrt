@@ -26,7 +26,7 @@ export const demoCircles: DemoCircle[] = [
     summary: 'Samen schilderen, materialen delen en elkaar iets laten zien.',
     description: 'Een kleine groep die geregeld bij elkaar komt. De ontmoeting heeft een plek, maar de mensen vallen niet samen met die plek.',
     memberNames: ['Noor (voorbeeld)', 'Sam (voorbeeld)', 'Alex (voorbeeld)', 'Mika (voorbeeld)'],
-    channels: ['algemeen', 'materiaal'],
+    channels: ['algemeen', 'inspiratie', 'materiaal'],
     places: [{id:'atelier',title:'Schildermiddag (fictief)',kind:'ontmoeting',
       description:'Een denkbeeldige ontmoetingsplek in Tilburg; geen werkelijk adres of afspraak.',
       lon:5.081,lat:51.556}]
