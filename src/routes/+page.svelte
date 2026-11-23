@@ -405,7 +405,7 @@
               <div class="activity-list">
                 <h2>Activiteiten op de kaart</h2>
                 {#each activeCircle.places as place (place.id)}
-                  <div class="activity"><strong>{place.title}</strong><p>{place.description}</p></div>
+                  <div class="activity"><strong>{place.title}</strong><p>{place.description}</p>{#if place.address}<p class="activity-address">{place.address}</p>{/if}{#if place.approximate}<p class="muted">Locatie op kaart bij benadering.</p>{/if}</div>
                 {/each}
               </div>
             {:else}
