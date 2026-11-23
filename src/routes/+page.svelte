@@ -330,9 +330,11 @@
           ownName={screenName}
           ownAvatar={personalPlace.avatar || ''}
           neighbours={demoNeighbours}
+          circles={demoCircles}
+          onCircle={openCircle}
           onPerson={openPerson}
           onOwnProfile={() => {selectedPerson = null; tab = 'profiel'; editingProfile = false;}} />
-        <div class="map-caption">Fictieve proefpersonen in postcodegebied 5041. De kaart toont aantallen per postcodegebied, geen woonadressen.</div>
+        <div class="map-caption">Proefprofielen op postcodegebiedniveau en kringen met een opgegeven ontmoetingsplek. Geen woonadressen; sommige kringlocaties zijn fictief.</div>
       </section>
       <aside class="sidebar" aria-label="Oproepen">
         <div class="sidebar-head">
@@ -403,7 +405,7 @@
               <div class="activity-list">
                 <h2>Activiteiten op de kaart</h2>
                 {#each activeCircle.places as place (place.id)}
-                  <div class="activity"><strong>{place.title}</strong><p>{place.description}</p></div>
+                  <div class="activity"><strong>{place.title}</strong><p>{place.description}</p>{#if place.address}<p class="activity-address">{place.address}</p>{/if}{#if place.approximate}<p class="muted">Locatie op kaart bij benadering.</p>{/if}</div>
                 {/each}
               </div>
             {:else}

@@ -66,15 +66,19 @@
       <button aria-label="Sluit activiteit" onclick={() => selected=null}>×</button>
       <strong>{selectedPlace.title}</strong>
       <p>{selectedPlace.description}</p>
+      {#if selectedPlace.address}<p class="address">{selectedPlace.address}</p>{/if}
+      {#if selectedPlace.approximate}<p class="accuracy">De kaartmarker is een benadering; het adres is leidend.</p>{/if}
     </section>
   {/if}
 </div>
-<p class="disclaimer">Voorbeeldlocaties op de kaart zijn verzonnen en bij benadering geplaatst. Geen echte afspraken, adressen of ledenlocaties.</p>
+<p class="disclaimer">Het Schilderklasje heeft een opgegeven ontmoetingsadres met een benaderde marker. Andere voorbeeldlocaties zijn fictief. Geen leden- of woonadressen.</p>
 <style>
   .circle-map{position:relative;width:100%;border:1px solid #dce2dc}
   .map{height:min(55vh,420px);min-height:275px;width:100%}
   .place-detail{position:absolute;right:12px;top:12px;z-index:2;max-width:260px;padding:13px;background:#fafaf8;border:1px solid #dce1da;box-shadow:0 3px 15px #1d2f2822}
   .place-detail button{float:right;background:none;border:0;font-size:22px;line-height:1;color:#4d5d50}
   .place-detail p{margin:6px 0 0;font-size:12px;color:#546157}
+  .place-detail .address{font-weight:600}
+  .place-detail .accuracy{color:#788078;font-size:11px}
   .disclaimer{font-size:12px;color:#6a7168;margin-top:9px}
 </style>

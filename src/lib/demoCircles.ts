@@ -7,7 +7,9 @@ export type CirclePlace = {
   title: string;
   kind: 'ontmoeting' | 'optreden';
   description: string;
-  // Deliberately approximate, fictitious demo positions, NOT actual events.
+  address?: string;
+  approximate?: boolean;
+  // Coordinates locate a place on the map; never infer member home locations.
   lon: number;
   lat: number;
 };
@@ -27,9 +29,10 @@ export const demoCircles: DemoCircle[] = [
     description: 'Een kleine groep die geregeld bij elkaar komt. De ontmoeting heeft een plek, maar de mensen vallen niet samen met die plek.',
     memberNames: ['Noor (voorbeeld)', 'Sam (voorbeeld)', 'Alex (voorbeeld)', 'Mika (voorbeeld)'],
     channels: ['algemeen', 'inspiratie', 'materiaal'],
-    places: [{id:'atelier',title:'Schildermiddag (fictief)',kind:'ontmoeting',
-      description:'Een denkbeeldige ontmoetingsplek in Tilburg; geen werkelijk adres of afspraak.',
-      lon:5.081,lat:51.556}]
+    places: [{id:'atelier',title:'Ontmoetingsplek schilderklasje',kind:'ontmoeting',
+      description:'Door de gebruiker opgegeven ontmoetingsadres van het schilderklasje; geen uitspraak over lesdata, tijden of ledenadressen.',
+      address:'Wilhelminapark 54, 5041 ED Tilburg', approximate:true,
+      lon:5.0796,lat:51.5660}]
   },
   {
     id: 'band-a', name: 'Band A (voorbeeld)',
