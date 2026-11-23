@@ -96,3 +96,9 @@ Het model kent een **zesuurs-herbeoordelingsritme**, uitsluitend na nieuwe inhou
 Kanalen zijn losse, door de kring te bepalen **plekken** om samen te komen, geen inhoudelijke regels of identiteitsetiketten. Het schilderklasje toont als fictieve proef `# algemeen`, `# inspiratie` en `# materiaal`; een nieuwe kring zou met alléén Algemeen kunnen starten. Deelnemers mogen in ieder kanaal vragen stellen, praten, helpen en iets organiseren. Het toevoegen van kanalen is optioneel, geen onboardingstap.
 
 Een complete bijdrage met reacties kan naar een ander kanaal worden verplaatst, met behoud van de oorspronkelijke identiteit, het gesprek en de herkomstverwijzingen. De interface biedt een bescheiden terugvindpad. Dit is in de browserdemo alleen toegestaan voor eigen bijdragen en fictieve voorbeelden; echte beheerdersrechten vereisen toekomstige serverautorisatie. De zesuursinterpretatie kan later **hooguit** een passende plek voorstellen, nooit vanzelf verplaatsen. Vooralsnog doet zij dat zelfs niet.
+
+## Kringen op de buurtkaart
+
+Een kring die **zelf een ontmoetingsplek deelt** mag op de algemene kaart verschijnen als zelfstandig sociaal verband, duidelijk onderscheiden van de kaartlaag met profielen. Op een kringmarker kan iemand de kring bekijken, zonder af te leiden waar leden wonen. Een kring zonder opgegeven locatie blijft volwaardig en krijgt geen verzonnen pin. De kaart is een manier om verbanden te ontdekken, geen verplicht geografisch toegangscriterium.
+
+In de demo staat het Schilderklasje op **Wilhelminapark 54, 5041 ED Tilburg** (door de gebruiker opgegeven ontmoetingsadres). De marker is een benadering; het adres is leidend. De andere bandlocaties blijven nadrukkelijk fictief, geen aangekondigde evenementen. Het delen van dit kringadres verleent niemand automatisch het recht een persoonlijk adres te publiceren.
