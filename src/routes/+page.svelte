@@ -14,6 +14,8 @@
   import type { Post, Message, Connection, Kind, CircleReply } from '$lib/types';
   import { reviewDueThreads, readInterpretations, REVIEW_INTERVAL_MS } from '$lib/circleInterpretation';
   import type { Interpretation } from '$lib/circleInterpretation';
+  import { channelsForCircle, readChannelSettings, readChannelAssignments, changeChannel, cleanChannelName, channelForThread } from '$lib/circleChannels';
+  import type { ChannelSettings, ChannelAssignments } from '$lib/circleChannels';
 
   type Tab = 'kaart' | 'kringen' | 'profiel';
   type Profile = { bio: string; appreciates: string; dislikes: string; links: string };
@@ -33,7 +35,11 @@
   let activeCircleId: CircleId | null = null;
   let showCircleMap = false;
   let circleFilter = 'alles';
-  let circleDraftKind: Kind = 'gesprek';
+  let channelSettings: ChannelSettings = {};
+  let channelAssignments: ChannelAssignments = {};
+  let addingChannel = false;
+  let newChannelName = '';
+  let lastMovedThread: {id:string;from:string;to:string}|null = null;
   let startingFrom: string | null = null;
   let showComposer = false;
   let editingProfile = false;
@@ -55,6 +61,11 @@
   $: activeCircle = activeCircleId ? circleById(activeCircleId) : null;
   $: circlePosts = activeCircle ? posts.filter((p) => p.circle === activeCircle.name || (activeCircle.id === 'schildergroep' && p.circle === 'Schildergroep')) : [];
   $: mapPosts = posts.filter((p) => p.visibility === 'buurt');
+  $: legacyCircleMessages = activeCircle ? messages.filter(m=>
+    m.circle === activeCircle.name || (activeCircle.id === 'schildergroep' && !m.circle)) : [];
+  $: availableChannels = activeCircle
+    ? channelsForCircle(activeCircle.id,channelSettings,[...activeCircle.channels,...legacyCircleMessages.map(m=>m.channel)])
+    : ['algemeen'];
   $: circleAssessments = activeCircle ? interpretations.filter(item =>
     circlePosts.some(post=>'post-'+post.id===item.threadId) ||
     messages.some(message=>(message.circle===activeCircle?.name ||
@@ -84,6 +95,8 @@
         messages = Array.isArray(data.messages) ? data.messages : [...demoMessages];
         replies = Array.isArray(data.replies) ? data.replies : [...demoReplies];
         interpretations = readInterpretations(data.interpretations);
+        channelSettings = readChannelSettings(data.channelSettings);
+        channelAssignments = readChannelAssignments(data.channelAssignments);
         connections = Array.isArray(data.connections) ? data.connections : [...demoConnections];
         screenName = typeof data.screenName === 'string' ? data.screenName : 'Gast';
         if (data.myProfile && typeof data.myProfile === 'object') {
@@ -114,14 +127,14 @@
       updated.some((item,i)=>item.threadId!==interpretations[i]?.threadId ||
         item.revision!==interpretations[i]?.revision || item.reviewedAt!==interpretations[i]?.reviewedAt)) {
       interpretations=updated;
-      try {localStorage.setItem(key,JSON.stringify({posts,messages,replies,interpretations,connections,screenName,myProfile,personalPlace}));}
+      try {localStorage.setItem(key,JSON.stringify({posts,messages,replies,interpretations,channelSettings,channelAssignments,connections,screenName,myProfile,personalPlace}));}
       catch {notice='De lokale interpretaties konden niet worden bewaard.';}
     }
   }
   function persist() {
     if (!stored) return;
     try {
-      localStorage.setItem(key, JSON.stringify({ posts, messages, replies, interpretations, connections, screenName, myProfile, personalPlace }));
+      localStorage.setItem(key, JSON.stringify({ posts, messages, replies, interpretations, channelSettings, channelAssignments, connections, screenName, myProfile, personalPlace }));
     } catch {
       notice = 'Opslaan in deze browser lukt niet.';
     }
@@ -136,7 +149,9 @@
     activeCircleId = id;
     channel = 'algemeen';
     circleFilter = 'alles';
-    circleDraftKind = 'gesprek';
+    addingChannel = false;
+    lastMovedThread = null;
+    newChannelName = '';
     messageText = '';
     startingFrom = null;
     showCircleMap = false;
@@ -146,6 +161,8 @@
   function circlesOverview() {
     activeCircleId = null;
     startingFrom = null;
+    addingChannel = false;
+    lastMovedThread = null;
     circleFilter = 'alles';
     showCircleMap = false;
     showComposer = false;
@@ -180,15 +197,13 @@
   function publishCircleEntry() {
     if (!activeCircle || !messageText.trim()) return;
     const post: Post = {
-      id:crypto.randomUUID(), author:screenName.trim() || 'Gast', kind:circleDraftKind,
-      text:messageText.trim(), visibility:'kring', circle:activeCircle.name,
+      id:crypto.randomUUID(), author:screenName.trim() || 'Gast', kind:'gesprek',
+      text:messageText.trim(), visibility:'kring', circle:activeCircle.name, channel,
       createdAt:Date.now(), ...(startingFrom ? {originId:startingFrom} : {})
     };
     posts = [post,...posts];
     messageText = '';
     startingFrom = null;
-    circleDraftKind = 'gesprek';
-    circleFilter = 'alles';
     persist();
   }
   function addCircleReply(parentId:string,text:string) {
@@ -201,6 +216,41 @@
       ? {...post,state} : post);
     persist();
   }
+  function addChannel() {
+    if (!activeCircle) return;
+    const candidate=cleanChannelName(newChannelName);
+    if (!candidate || availableChannels.includes(candidate) || availableChannels.length>=12) {
+      notice = !candidate ? 'Geef het kanaal een naam.' : 'Dit kanaal bestaat al of de limiet is bereikt.';
+      return;
+    }
+    channelSettings=changeChannel(channelSettings,activeCircle.id,candidate);
+    channel=candidate;
+    newChannelName='';
+    addingChannel=false;
+    notice='';
+    persist();
+  }
+  function moveCircleThread(threadId:string,destination:string) {
+    if (!activeCircle || !availableChannels.includes(destination)) return;
+    const entry=circleFeed.find(item=>item.id===threadId);
+    if (!entry) return;
+    const permitted=entry.author===screenName || (entry.kind==='post' ? Boolean(entry.post.demo) : Boolean(entry.message.demo));
+    if (!permitted) return;
+    const original=entry.kind==='post' ? entry.post.channel : entry.message.channel;
+    const from=channelForThread(threadId,original,channelAssignments);
+    if (from===destination) return;
+    channelAssignments={...channelAssignments,[threadId]:destination};
+    lastMovedThread={id:threadId,from,to:destination};
+    persist();
+  }
+  function selectThreadChannel(threadId:string) {
+    if (!activeCircle) return;
+    const p=threadId.startsWith('post-') ? circlePosts.find(post=>'post-'+post.id===threadId) : null;
+    const m=threadId.startsWith('message-') ? legacyCircleMessages.find(message=>'message-'+message.id===threadId) : null;
+    if (!p && !m) return;
+    const destination=channelForThread(threadId,p?.channel ?? m?.channel,channelAssignments);
+    channel=availableChannels.includes(destination) ? destination : 'algemeen';
+  }
   function startFrom(parentId:string) {
     startingFrom=parentId;
     messageText='';
@@ -209,7 +259,7 @@
     document.getElementById('circle-entry')?.focus();
   }
   async function goToOrigin(parentId:string) {
-    circleFilter='alles';
+    selectThreadChannel(parentId);
     await tick();
     document.getElementById('circle-'+parentId)?.scrollIntoView({behavior:'smooth',block:'center'});
   }
@@ -231,6 +281,10 @@
     messages = [...demoMessages];
     replies = [...demoReplies];
     interpretations = [];
+    channelSettings = {};
+    channelAssignments = {};
+    addingChannel = false;
+    lastMovedThread = null;
     connections = [...demoConnections];
     myProfile = { bio: '', appreciates: '', dislikes: '', links: '' };
     personalPlace = emptyPlace();
@@ -363,34 +417,45 @@
           </section>
         {:else}
           <div class="circle-flow">
-            <section class="circle-editor" aria-label="Iets delen met deze kring">
-              <div class="circle-editor-identity">
-                <Avatar name={screenName} image={personalPlace.avatar || ''} size="medium"/>
-                <div><strong>{screenName || 'Gast'}</strong><span>Wat wil je met deze kring delen?</span></div>
+            <nav class="circle-channels" aria-label="Kanalen van deze kring">
+              {#each availableChannels as option}
+                <button class:selected={channel===option}
+                  aria-current={channel===option?'page':undefined}
+                  onclick={() => {channel=option;lastMovedThread=null;}}
+                ># {option}</button>
+              {/each}
+              <button class="add-channel-trigger" aria-expanded={addingChannel}
+                onclick={() => addingChannel=!addingChannel}>+ Kanaal</button>
+            </nav>
+            {#if addingChannel}
+              <form class="new-channel-form" onsubmit={(event) => {event.preventDefault();addChannel();}}>
+                <label for="new-channel-name">Nieuw kanaal</label>
+                <input id="new-channel-name" bind:value={newChannelName} maxlength="32" placeholder="bijv. inspiratie" required/>
+                <button type="submit" class="solid-button">Toevoegen</button>
+                <button type="button" class="action-link" onclick={() => {addingChannel=false;newChannelName='';}}>Annuleren</button>
+              </form>
+            {/if}
+            {#if lastMovedThread}
+              <div class="channel-move-notice" role="status">
+                Gesprek verplaatst van #{lastMovedThread.from} naar #{lastMovedThread.to}.
+                <button class="action-link" onclick={async () => {channel=lastMovedThread!.to;const id=lastMovedThread!.id;lastMovedThread=null;await tick();document.getElementById('circle-'+id)?.scrollIntoView({block:'center',behavior:'smooth'});}}>Bekijk gesprek</button>
+                <button class="dismiss-notice" aria-label="Sluit melding" onclick={() => lastMovedThread=null}>×</button>
               </div>
+            {/if}
+            <section class="circle-editor" aria-label="Iets delen in dit kanaal">
               <form onsubmit={(event) => {event.preventDefault(); publishCircleEntry();}}>
                 {#if startingFrom}
-                  <div class="origin-note">Nieuwe bijdrage vanuit een eerder gesprek
+                  <div class="origin-note">Nieuw bericht vanuit een eerder gesprek
                     <button type="button" onclick={() => startingFrom=null} aria-label="Verwijder verwijzing">×</button>
                   </div>
                 {/if}
-                <label class="visually-hidden" for="circle-entry">Schrijf iets voor deze kring</label>
+                <label for="circle-entry" class="visually-hidden">Schrijf in #{channel}</label>
                 <textarea id="circle-entry" bind:value={messageText} rows="3" maxlength="600" required
-                  placeholder="Waar wil je het over hebben, wat wil je vragen of delen?"></textarea>
+                  placeholder={'Schrijf iets in #'+channel+'…'}></textarea>
                 <div class="circle-editor-bottom">
-                  <details class="entry-options">
-                    <summary>{circleDraftKind === 'gesprek' ? 'Eventueel aanduiden' : circleDraftKind === 'vraag' ? 'Vraag · aanpassen' : circleDraftKind === 'aanbod' ? 'Aanbod · aanpassen' : 'Gedachte · aanpassen'}</summary>
-                    <label for="circle-kind">Als een aanduiding helpt</label>
-                    <select id="circle-kind" bind:value={circleDraftKind}>
-                      <option value="gesprek">Geen aanduiding</option>
-                      <option value="vraag">Vraag</option>
-                      <option value="aanbod">Aanbod</option>
-                      <option value="gedachte">Gedachte</option>
-                    </select>
-                  </details>
-                  <button type="submit" class="solid-button" disabled={!messageText.trim()}>Delen</button>
+                  <span class="composer-context">In #{channel}</span>
+                  <button type="submit" class="solid-button" disabled={!messageText.trim()}>Versturen</button>
                 </div>
-                <p class="circle-draft-note">Alleen in deze fictieve kringweergave; er zijn nog geen echte toegangsrechten.</p>
               </form>
             </section>
 
@@ -398,7 +463,7 @@
               <CircleDiscussion
                 posts={circlePosts}
                 messages={messages.filter((m) => m.circle === activeCircle?.name || (activeCircle?.id === 'schildergroep' && !m.circle))}
-                {replies} filter="alles"
+                {replies} filter={channel} channels={availableChannels} assignments={channelAssignments} onMove={moveCircleThread}
                 circleName={activeCircle.name} {screenName} ownAvatar={personalPlace.avatar || ''}
                 onReply={addCircleReply} onStatus={setCircleState} onBranch={startFrom}
                 onDelete={deleteCirclePost} onPerson={openPerson} onOrigin={goToOrigin}
@@ -549,6 +614,15 @@
   .circle-review-debug>p{max-width:680px}
   .review-entry{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid #e5e9e4}
   .review-ref,.review-entry small{color:#768078}
+  .circle-channels{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #dfe5df;margin:0 0 18px;padding:0 0 10px}
+  .circle-channels button{border:0;border-radius:3px;background:transparent;padding:8px 11px;color:#586a5c}
+  .circle-channels button.selected{background:#e6eee6;color:#244734;font-weight:600}
+  .circle-channels .add-channel-trigger{margin-left:auto;font-size:12px;color:#39644c}
+  .new-channel-form{display:flex;align-items:center;flex-wrap:wrap;gap:9px;background:#f2f5f1;border:1px solid #e0e6dd;padding:12px;margin-bottom:15px}
+  .new-channel-form input{width:min(270px,100%);flex:1;min-width:140px}
+  .channel-move-notice{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 12px;background:#edf3ed;color:#4c6552;font-size:12px;margin-bottom:14px}
+  .dismiss-notice{border:0;background:none;margin-left:auto;font-size:18px;color:#586d5d}
+  .composer-context{color:#647468;font-size:12px}
   .circle-flow{max-width:760px}
   .circle-editor{padding:18px 20px 15px;border:1px solid #dce2db;background:#f6f8f4;margin:14px 0 38px}
   .circle-editor-identity{display:flex;align-items:center;gap:12px;margin-bottom:12px}
