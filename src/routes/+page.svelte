@@ -330,9 +330,11 @@
           ownName={screenName}
           ownAvatar={personalPlace.avatar || ''}
           neighbours={demoNeighbours}
+          circles={demoCircles}
+          onCircle={openCircle}
           onPerson={openPerson}
           onOwnProfile={() => {selectedPerson = null; tab = 'profiel'; editingProfile = false;}} />
-        <div class="map-caption">Fictieve proefpersonen in postcodegebied 5041. De kaart toont aantallen per postcodegebied, geen woonadressen.</div>
+        <div class="map-caption">Proefprofielen op postcodegebiedniveau en kringen met een opgegeven ontmoetingsplek. Geen woonadressen; sommige kringlocaties zijn fictief.</div>
       </section>
       <aside class="sidebar" aria-label="Oproepen">
         <div class="sidebar-head">
