@@ -254,7 +254,6 @@
   function startFrom(parentId:string) {
     startingFrom=parentId;
     messageText='';
-    circleDraftKind='gesprek';
     circleFilter='alles';
     document.getElementById('circle-entry')?.focus();
   }
