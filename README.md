@@ -102,3 +102,9 @@ Een kring opent standaard in **# algemeen**. Je schrijft direct in het gekozen k
 Onder **Meer** bij een bijdrage kan de schrijver die, met de complete reactiedraad, naar een ander bestaand kanaal verplaatsen. Voor de fictieve demobijdragen mag de browsergebruiker dit eveneens verkennen. De inhoud, reacties, herkomstverwijzingen en tijdstempels blijven hetzelfde; een bevestiging biedt een link naar de nieuwe plek. Verplaatsingen en kanaaltoevoegingen blijven uitsluitend lokaal en hebben geen toegangsrechten tussen echte gebruikers. Een oude kanaalaanduiding in een opgeslagen bericht blijft leesbaar; oudere berichten zonder kanaal vallen onder **# algemeen**.
 
 De zesuursproefduiding blijft ingeklapt en verandert nooit zelfstandig het kanaal, het gesprek of de zichtbaarheid. De later noodzakelijke autorisatie voor kanaalbeheer en het verplaatsen van andermans bijdragen is bewust **niet** in deze frontenddemo gesimuleerd.
+
+## Kringen zichtbaar op de algemene kaart
+
+De algemene kaart toont nu ook **kringmarkeringen** (een oranje `K`) voor kringen met een expliciet opgegeven ontmoetingsplek. Een klik opent een kort paneel en een directe ingang naar de kringpagina. Een kring zonder plaats, zoals Band B, krijgt bewust geen kunstmatige marker. Deze markeringen staan **los van** de gegroepeerde, vrijwillige PC4-profielmarkeringen; het adres van een kring zegt niets over waar leden wonen.
+
+Voor het Schilderklasje is het door de gebruiker opgegeven ontmoetingsadres **Wilhelminapark 54, 5041 ED Tilburg** vastgelegd, ook zichtbaar bij de activiteit in de kring. De OpenLayers-marker ligt **bij benadering** bij dit adres, niet op kadastrale nauwkeurigheid. De andere demo-kringen en locaties blijven fictief en worden herkenbaar als voorbeeld aangeduid. Het adres van het Schilderklasje is geen bevestiging van lestijden, toegankelijkheid of publieke openstelling.
